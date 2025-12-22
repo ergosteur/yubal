@@ -1,0 +1,30 @@
+# Data directories
+data/downloads/
+data/library/
+data/*.db
+data/*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+
+# uv
+uv.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tailwind
+tailwindcss
+app/static/css/output.css

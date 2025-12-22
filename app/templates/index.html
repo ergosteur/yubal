@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}ytad - Download YouTube Music Albums{% endblock %}
+
+{% block content %}
+<div class="text-center mb-8">
+    <h2 class="text-3xl font-semibold mb-2">Download YouTube Music Albums</h2>
+    <p class="text-muted">Paste a YouTube Music album URL to download and organize with proper tags</p>
+</div>
+
+<form class="bg-bg-2 p-8 rounded-xl border border-border" action="{{ url_for('main.download') }}" method="POST">
+    <div class="mb-6">
+        <label for="url" class="block mb-2 text-sm text-muted">YouTube Music Album URL</label>
+        <input
+            type="url"
+            id="url"
+            name="url"
+            placeholder="https://music.youtube.com/playlist?list=OLAK5uy_..."
+            required
+            autofocus
+            class="w-full p-4 text-primary bg-background border border-border rounded-lg text-foreground transition-colors duration-200 focus:outline-none focus:border-orange placeholder:text-tx-3"
+        >
+    </div>
+
+    <button type="submit" class="w-full py-4 px-8 text-primary-foreground font-semibold bg-primary border-none rounded-lg cursor-pointer transition-colors duration-200 hover:bg-primary-hover active:opacity-90">
+        Download Album
+    </button>
+</form>
+
+<div class="mt-8 p-6 bg-card rounded-xl border border-border">
+    <h3 class="text-foreground mb-4 font-semibold text-xl">How to use</h3>
+    <ol class="pl-5 text-muted text-sm list-decimal space-y-2">
+        <li>Go to <a href="https://music.youtube.com" target="_blank" class="text-foreground hover:text-foreground-hover transition-colors">YouTube Music</a></li>
+        <li>Find an album and copy its URL (should contain <code class="bg-ui px-2 py-1 rounded text-sm text-tx font-mono">list=OLAK5uy_</code>)</li>
+        <li>Paste the URL above and click Download</li>
+        <li>Wait for download and auto-tagging to complete</li>
+        <li>Find your organized music in the <code class="bg-border px-2 py-1 rounded text-sm text-foreground font-mono">data/library</code> folder</li>
+    </ol>
+</div>
+{% endblock %}

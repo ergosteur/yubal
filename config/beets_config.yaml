@@ -1,0 +1,54 @@
+# Beets configuration for ytad
+# Auto-tagging and organization settings
+
+# Library paths (relative to project root)
+directory: data/library
+library: data/beets.db
+
+# Import settings
+import:
+    move: yes                    # Move files instead of copy
+    write: yes                   # Write tags to files
+    copy: no
+    autotag: yes
+    quiet_fallback: skip         # Skip if no confident match in quiet mode
+    timid: no                    # Don't ask for confirmation
+    log: data/beets_import.log
+
+# Path format for organized files
+paths:
+    default: $albumartist/$album%aunique{}/$track - $title
+    singleton: Non-Album/$artist - $title
+    comp: Compilations/$album%aunique{}/$track - $title
+
+# Matching settings
+match:
+    strong_rec_thresh: 0.04      # 96% similarity = strong recommendation
+    preferred:
+        countries: ['US', 'GB', 'XW']  # XW = worldwide
+        media: ['Digital Media']
+
+# MusicBrainz settings
+musicbrainz:
+    host: musicbrainz.org
+    https: yes
+    ratelimit: 1
+    ratelimit_interval: 1.0
+    extra_tags: [year, label, catalognum, country, media]
+    genres: yes
+
+# Plugins
+plugins: fetchart embedart
+
+# Fetch album art
+fetchart:
+    auto: yes
+    sources: filesystem coverart itunes amazon albumart
+    store_source: no
+
+# Embed album art in files
+embedart:
+    auto: yes
+    ifempty: no
+    maxwidth: 1000
+    remove_art_file: no

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if result.success %}Download Complete{% else %}Download Failed{% endif %} - ytad
+{% endblock %}
+
+{% block content %}
+<div class="bg-bg-2 p-8 rounded-xl border border-ui">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl {% if result.success %}bg-success-bg text-green{% else %}bg-error-bg text-red{% endif %}">
+            {% if result.success %}✓{% else %}✗{% endif %}
+        </div>
+        <h2 class="text-2xl font-semibold">
+            {% if result.success %}
+                Download Complete
+            {% else %}
+                Download Failed
+            {% endif %}
+        </h2>
+    </div>
+
+    {% if not result.success %}
+    <div class="bg-error-bg border border-red text-red p-4 rounded-lg mb-6 text-sm">
+        {% if result.stage_failed %}
+        <span class="inline-block bg-red text-bg px-2 py-1 rounded text-xs mb-2">Failed at: {{ result.stage_failed }}</span><br>
+        {% endif %}
+        {{ result.error or "An unknown error occurred" }}
+    </div>
+    {% endif %}
+
+    <div class="mb-6">
+        {% if result.album_info %}
+        <div class="flex py-3 border-b border-ui">
+            <span class="w-28 text-tx-2 text-sm">Album</span>
+            <span class="flex-1 text-sm">{{ result.album_info.title }}</span>
+        </div>
+        <div class="flex py-3 border-b border-ui">
+            <span class="w-28 text-tx-2 text-sm">Artist</span>
+            <span class="flex-1 text-sm">{{ result.album_info.artist }}</span>
+        </div>
+        {% if result.album_info.year %}
+        <div class="flex py-3 border-b border-ui">
+            <span class="w-28 text-tx-2 text-sm">Year</span>
+            <span class="flex-1 text-sm">{{ result.album_info.year }}</span>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="flex py-3 border-b border-ui">
+            <span class="w-28 text-tx-2 text-sm">Tracks</span>
+            <span class="flex-1 text-sm">{{ result.track_count }}</span>
+        </div>
+
+        {% if result.success and result.final_path %}
+        <div class="flex py-3 border-b border-ui">
+            <span class="w-28 text-tx-2 text-sm">Location</span>
+            <span class="flex-1 text-sm font-mono bg-ui px-2 py-1 rounded break-all">{{ result.final_path }}</span>
+        </div>
+        {% endif %}
+
+        <div class="flex py-3">
+            <span class="w-28 text-tx-2 text-sm">Source URL</span>
+            <span class="flex-1 text-sm">
+                <a href="{{ result.url }}" target="_blank" class="text-cyan hover:text-blue transition-colors">
+                    {{ result.url[:60] }}{% if result.url|length > 60 %}...{% endif %}
+                </a>
+            </span>
+        </div>
+    </div>
+
+    {% if result.album_info and result.album_info.tracks %}
+    <div class="mt-4">
+        <h4 class="text-sm text-tx-2 mb-2">Tracks</h4>
+        <ul class="list-none p-2 bg-bg rounded-lg max-h-52 overflow-y-auto">
+            {% for track in result.album_info.tracks %}
+            <li class="p-2 text-sm text-tx-2 border-b border-ui last:border-b-0">
+                {{ track.track_number }}. {{ track.title }} - {{ track.artist }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('main.index') }}" class="inline-block mt-6 py-3 px-6 bg-ui-2 text-tx no-underline rounded-lg text-sm transition-colors duration-200 hover:bg-ui-3">
+        ← Download Another Album
+    </a>
+</div>
+{% endblock %}
