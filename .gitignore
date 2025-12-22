@@ -19,9 +19,9 @@ uv.lock
 .DS_Store
 Thumbs.db
 
-# data
-data
-spotify_token.json
-*.db
-*.pickle
-*.log
+# App data
+/data/
+**/spotify_token.json
+**/*.db
+**/*.pickle
+**/*.log
