@@ -24,3 +24,4 @@ data
 spotify_token.json
 *.db
 *.pickle
+*.log

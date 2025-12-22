@@ -20,6 +20,16 @@ class TagResult:
     error: Optional[str] = None
 
 
+@dataclass
+class LibraryHealth:
+    """Result of a library health check."""
+
+    healthy: bool
+    library_album_count: int
+    database_album_count: int
+    message: str
+
+
 class Tagger:
     """Handles music tagging and organization via beets CLI."""
 
@@ -32,6 +42,12 @@ class Tagger:
         """Get the command to run beets using the current Python."""
         # Use python -m to avoid shebang issues with venv scripts
         return [sys.executable, "-m", "beets"]
+
+    def _get_beets_env(self) -> dict[str, str]:
+        """Get environment variables for running beets commands."""
+        env = os.environ.copy()
+        env["BEETSDIR"] = str(self.beets_config.parent)
+        return env
 
     def tag_album(self, source_dir: Path, copy: bool = False) -> TagResult:
         """
@@ -107,10 +123,6 @@ class Tagger:
         self.library_dir.mkdir(parents=True, exist_ok=True)
         self.beets_db.parent.mkdir(parents=True, exist_ok=True)
 
-        # Set BEETSDIR to config directory (for state.pickle, spotify_token.json)
-        env = os.environ.copy()
-        env["BEETSDIR"] = str(self.beets_config.parent)
-
         cmd = self._get_beet_command() + [
             "--config",
             str(self.beets_config),
@@ -131,7 +143,7 @@ class Tagger:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,  # Combine stderr into stdout
             text=True,
-            env=env,
+            env=self._get_beets_env(),
             cwd=str(self.beets_config.parent.parent),
         )
 
@@ -181,9 +193,6 @@ class Tagger:
         if not album:
             return None
 
-        env = os.environ.copy()
-        env["BEETSDIR"] = str(self.beets_config.parent)
-
         # Query beets for the album
         cmd = self._get_beet_command() + [
             "--config", str(self.beets_config),
@@ -193,7 +202,7 @@ class Tagger:
 
         try:
             result = subprocess.run(
-                cmd, capture_output=True, text=True, env=env, timeout=30
+                cmd, capture_output=True, text=True, env=self._get_beets_env(), timeout=30
             )
             if result.returncode == 0 and result.stdout.strip():
                 # Return the first matching album path
@@ -231,3 +240,145 @@ class Tagger:
                     newest_dir = album_dir
 
         return newest_dir
+
+    def check_library_health(self) -> LibraryHealth:
+        """
+        Check if the beets database is in sync with the library folder.
+
+        Returns:
+            LibraryHealth with sync status and counts
+        """
+        # Count albums in library folder (Artist/Album structure)
+        library_album_count = 0
+        if self.library_dir.exists():
+            for artist_dir in self.library_dir.iterdir():
+                if artist_dir.is_dir():
+                    for album_dir in artist_dir.iterdir():
+                        if album_dir.is_dir():
+                            # Check if it actually contains audio files
+                            if self._find_audio_files(album_dir):
+                                library_album_count += 1
+
+        # Count albums in beets database
+        database_album_count = self._count_database_albums()
+
+        # Determine health status
+        if library_album_count == 0 and database_album_count == 0:
+            return LibraryHealth(
+                healthy=True,
+                library_album_count=0,
+                database_album_count=0,
+                message="Empty library - ready for first import",
+            )
+
+        if library_album_count > 0 and database_album_count == 0:
+            return LibraryHealth(
+                healthy=False,
+                library_album_count=library_album_count,
+                database_album_count=0,
+                message=f"Database is empty but library has {library_album_count} albums - rebuild needed",
+            )
+
+        if database_album_count > 0 and library_album_count == 0:
+            return LibraryHealth(
+                healthy=False,
+                library_album_count=0,
+                database_album_count=database_album_count,
+                message=f"Database has {database_album_count} albums but library folder is empty",
+            )
+
+        # Both have albums - check if counts match (rough heuristic)
+        if abs(library_album_count - database_album_count) > 1:
+            return LibraryHealth(
+                healthy=False,
+                library_album_count=library_album_count,
+                database_album_count=database_album_count,
+                message=f"Mismatch: {library_album_count} albums in folder, {database_album_count} in database",
+            )
+
+        return LibraryHealth(
+            healthy=True,
+            library_album_count=library_album_count,
+            database_album_count=database_album_count,
+            message=f"Healthy: {library_album_count} albums in sync",
+        )
+
+    def _count_database_albums(self) -> int:
+        """Count the number of albums in the beets database."""
+        if not self.beets_db.exists():
+            return 0
+
+        cmd = self._get_beet_command() + [
+            "--config", str(self.beets_config),
+            "ls", "-a",  # List albums only
+        ]
+
+        try:
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, env=self._get_beets_env(), timeout=30
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return len(result.stdout.strip().split("\n"))
+            return 0
+        except Exception:
+            return 0
+
+    def rebuild_database(self) -> tuple[bool, str]:
+        """
+        Rebuild the beets database from existing library files.
+
+        This re-imports all albums in the library folder without
+        modifying the files or fetching new metadata.
+
+        Returns:
+            Tuple of (success, message)
+        """
+        if not self.library_dir.exists():
+            return False, "Library directory does not exist"
+
+        # Check if there are albums to import
+        album_count = 0
+        for artist_dir in self.library_dir.iterdir():
+            if artist_dir.is_dir():
+                for album_dir in artist_dir.iterdir():
+                    if album_dir.is_dir() and self._find_audio_files(album_dir):
+                        album_count += 1
+
+        if album_count == 0:
+            return False, "No albums found in library to rebuild from"
+
+        # Run beets import with --noautotag to just register files
+        cmd = self._get_beet_command() + [
+            "--config", str(self.beets_config),
+            "import",
+            "--noautotag",  # Don't fetch metadata, trust existing tags
+            "--nowrite",    # Don't modify files
+            str(self.library_dir),
+        ]
+
+        print(f"Rebuilding database: {' '.join(cmd)}")
+
+        try:
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                env=self._get_beets_env(),
+            )
+
+            for line in process.stdout:
+                line = line.rstrip()
+                print(f"  [beets] {line}")
+
+            process.wait(timeout=600)  # 10 minutes for large libraries
+
+            if process.returncode == 0:
+                return True, f"Successfully rebuilt database from {album_count} albums"
+            else:
+                return False, f"Rebuild failed with return code {process.returncode}"
+
+        except subprocess.TimeoutExpired:
+            return False, "Rebuild timed out after 10 minutes"
+        except Exception as e:
+            return False, f"Rebuild failed: {str(e)}"
