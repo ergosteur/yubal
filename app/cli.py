@@ -50,8 +50,8 @@ def main_callback(
 
 # Default paths
 DEFAULT_BEETS_CONFIG = Path(__file__).parent.parent / "config" / "beets_config.yaml"
-DEFAULT_LIBRARY_DIR = Path(__file__).parent.parent / "data" / "library"
-DEFAULT_BEETS_DB = Path(__file__).parent.parent / "data" / "beets.db"
+DEFAULT_LIBRARY_DIR = Path(__file__).parent.parent / "data"
+DEFAULT_BEETS_DB = Path(__file__).parent.parent / "config" / "beets.db"
 
 def echo_error(message: str) -> None:
     """Print error message and exit."""
@@ -143,12 +143,10 @@ def tag(
     if copy:
         echo_info("Mode: copy (original files will be preserved)")
 
-    beets_db = library_dir.parent / "beets.db"
-
     tagger = Tagger(
         beets_config=beets_config,
         library_dir=library_dir,
-        beets_db=beets_db,
+        beets_db=beets_config.parent / "beets.db",
     )
 
     result = tagger.tag_album(input_dir, copy=copy)
@@ -218,12 +216,10 @@ def sync(
         # Step 2: Tag
         echo_info(f"\n--- Step 2: Tag ---")
 
-        beets_db = library_dir.parent / "beets.db"
-
         tagger = Tagger(
             beets_config=beets_config,
             library_dir=library_dir,
-            beets_db=beets_db,
+            beets_db=beets_config.parent / "beets.db",
         )
 
         tag_result = tagger.tag_album(temp_dir)

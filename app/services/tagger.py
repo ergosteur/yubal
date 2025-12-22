@@ -107,7 +107,7 @@ class Tagger:
         self.library_dir.mkdir(parents=True, exist_ok=True)
         self.beets_db.parent.mkdir(parents=True, exist_ok=True)
 
-        # Set BEETSDIR to use our config directory
+        # Set BEETSDIR to config directory (for state.pickle, spotify_token.json)
         env = os.environ.copy()
         env["BEETSDIR"] = str(self.beets_config.parent)
 

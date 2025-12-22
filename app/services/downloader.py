@@ -270,11 +270,6 @@ class Downloader:
                 {
                     "key": "EmbedThumbnail",
                 },
-                # Remove unwanted YouTube metadata tags (runs after EmbedThumbnail)
-                {
-                    "key": "Exec",
-                    "exec_cmd": 'ffmpeg -y -i %(filepath)q -c copy -metadata comment= -metadata purl= -metadata description= -metadata synopsis= -f mp3 %(filepath)q.tmp && mv %(filepath)q.tmp %(filepath)q',
-                },
             ],
             "writethumbnail": True,
             "progress_hooks": [progress_hook],

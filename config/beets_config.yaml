@@ -1,8 +1,8 @@
 ---
-directory: /Users/guille/repos/ytad/data/library
-library: /Users/guille/repos/ytad/data/beets.db
+directory: /Users/guille/repos/ytad/data
+library: /Users/guille/repos/ytad/config/beets.db
 
-plugins: fetchart fromfilename spotify zero lastgenre lyrics
+plugins: fetchart embedart fromfilename spotify zero lastgenre lyrics
 
 threaded: yes
 asciify_paths: true
@@ -21,7 +21,7 @@ import:
   quiet: yes
   quiet_fallback: asis
   duplicate_action: skip
-  log: /Users/guille/repos/ytad/data/beets_import.log
+  log: /Users/guille/repos/ytad/config/beets_import.log
 
 # Relaxed matching for YouTube rips
 match:
@@ -38,6 +38,9 @@ match:
 fetchart:
   auto: yes
   sources: filesystem coverart itunes amazon albumart
+
+embedart:
+  auto: yes
 
 # Spotify as primary metadata source
 spotify:
