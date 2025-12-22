@@ -3,6 +3,7 @@ data/downloads/
 data/library/
 data/*.db
 data/*.log
+output/
 
 # Python
 __pycache__/

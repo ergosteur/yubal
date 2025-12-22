@@ -33,7 +33,7 @@ class Tagger:
         # Use python -m to avoid shebang issues with venv scripts
         return [sys.executable, "-m", "beets"]
 
-    def tag_album(self, source_dir: Path) -> TagResult:
+    def tag_album(self, source_dir: Path, no_move: bool = False) -> TagResult:
         """
         Tag and organize an album using beets.
 
@@ -42,6 +42,7 @@ class Tagger:
 
         Args:
             source_dir: Directory containing downloaded audio files
+            no_move: If True, copy files to library instead of moving (originals stay tagged in place)
 
         Returns:
             TagResult with success status and final location
@@ -56,7 +57,7 @@ class Tagger:
             )
 
         try:
-            result = self._run_beets_import(source_dir)
+            result = self._run_beets_import(source_dir, no_move=no_move)
 
             if result.returncode != 0:
                 return TagResult(
@@ -95,12 +96,12 @@ class Tagger:
                 error=f"Unexpected error during tagging: {str(e)}",
             )
 
-    def _run_beets_import(self, source_dir: Path) -> subprocess.CompletedProcess:
+    def _run_beets_import(self, source_dir: Path, no_move: bool = False) -> subprocess.CompletedProcess:
         """
         Execute beets import command.
 
         Uses quiet mode (-q) for non-interactive import.
-        Uses move mode to relocate files to library.
+        Uses move mode to relocate files to library (unless no_move is True).
         """
         # Ensure library directory exists (beets prompts otherwise)
         self.library_dir.mkdir(parents=True, exist_ok=True)
@@ -114,8 +115,13 @@ class Tagger:
             "--config",
             str(self.beets_config),
             "import",
-            str(source_dir),
         ]
+
+        # --copy: copy files to library instead of moving (originals stay in place, tagged)
+        if no_move:
+            cmd.append("--copy")
+
+        cmd.append(str(source_dir))
 
         print(f"Running beets: {' '.join(cmd)}")
 

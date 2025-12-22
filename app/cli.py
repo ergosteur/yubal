@@ -118,6 +118,11 @@ def tag(
         "--beets-config", "-c",
         help="Path to beets configuration file",
     ),
+    no_move: bool = typer.Option(
+        False,
+        "--no-move",
+        help="Tag files in place without moving (copies to library instead)",
+    ),
 ) -> None:
     """
     Tag and organize downloaded music using beets.
@@ -133,6 +138,8 @@ def tag(
 
     echo_info(f"Tagging files in: {input_dir}")
     echo_info(f"Library directory: {library_dir}")
+    if no_move:
+        echo_info("Mode: tag in place (files won't be moved)")
 
     beets_db = library_dir.parent / "beets.db"
 
@@ -142,13 +149,15 @@ def tag(
         beets_db=beets_db,
     )
 
-    result = tagger.tag_album(input_dir)
+    result = tagger.tag_album(input_dir, no_move=no_move)
 
     if not result.success:
         echo_error(result.error or "Tagging failed")
 
     echo_info(f"Tagged {result.track_count} tracks")
-    if result.dest_dir:
+    if no_move:
+        echo_success(f"Files tagged in place: {input_dir}")
+    elif result.dest_dir:
         echo_success(f"Organized to: {result.dest_dir}")
     else:
         echo_success("Tagging complete")
@@ -170,11 +179,6 @@ def sync(
         "mp3",
         "--format", "-f",
         help="Audio format (mp3, m4a, opus, etc.)",
-    ),
-    keep_temp: bool = typer.Option(
-        False,
-        "--keep-temp",
-        help="Keep temporary download directory (for debugging)",
     ),
 ) -> None:
     """
@@ -235,11 +239,9 @@ def sync(
 
     finally:
         # Cleanup temp directory
-        if not keep_temp and temp_dir.exists():
+        if temp_dir.exists():
             echo_info(f"Cleaning up temp directory...")
             shutil.rmtree(temp_dir, ignore_errors=True)
-        elif keep_temp:
-            echo_info(f"Temp directory kept at: {temp_dir}")
 
 
 @app.command()

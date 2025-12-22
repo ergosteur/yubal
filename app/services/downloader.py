@@ -244,6 +244,7 @@ class Downloader:
         """Build yt-dlp options dictionary."""
         return {
             "format": "bestaudio/best",
+            "remote_components": ["ejs:github"],
             "outtmpl": str(output_dir / "%(playlist_index|0)02d - %(title)s.%(ext)s"),
             # Override track number with playlist index
             # Syntax: "SOURCE_FIELD:%(DEST_FIELD)s"
