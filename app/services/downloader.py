@@ -236,7 +236,7 @@ class Downloader:
                     "preferredcodec": self.audio_format,
                     "preferredquality": self.audio_quality,
                 },
-                # Set track number from playlist index, and use release_date instead of upload_date
+                # Set track number from playlist index, use release_date
                 {
                     "key": "MetadataParser",
                     "when": "pre_process",

@@ -61,7 +61,7 @@ class Tagger:
 
         Args:
             source_dir: Directory containing downloaded audio files
-            copy: If True, copy files to library instead of moving (originals stay tagged in place)
+            copy: If True, copy files instead of moving (originals stay)
 
         Returns:
             TagResult with success status and final location
@@ -128,14 +128,15 @@ class Tagger:
         self.library_dir.mkdir(parents=True, exist_ok=True)
         self.beets_db.parent.mkdir(parents=True, exist_ok=True)
 
-        cmd = self._get_beet_command() + [
+        cmd = [
+            *self._get_beet_command(),
             "--config",
             str(self.beets_config),
             "import",
             "-q",  # Quiet mode - non-interactive
         ]
 
-        # --copy: copy files to library instead of moving (originals stay in place, tagged)
+        # --copy: copy files instead of moving (originals stay in place)
         if copy:
             cmd.append("--copy")
 
@@ -213,7 +214,8 @@ class Tagger:
             return None
 
         # Query beets for the album
-        cmd = self._get_beet_command() + [
+        cmd = [
+            *self._get_beet_command(),
             "--config",
             str(self.beets_config),
             "ls",
@@ -303,7 +305,10 @@ class Tagger:
                 healthy=False,
                 library_album_count=library_album_count,
                 database_album_count=0,
-                message=f"Database is empty but library has {library_album_count} albums - rebuild needed",
+                message=(
+                    f"Database empty but library has "
+                    f"{library_album_count} albums - rebuild needed"
+                ),
             )
 
         if database_album_count > 0 and library_album_count == 0:
@@ -311,7 +316,10 @@ class Tagger:
                 healthy=False,
                 library_album_count=0,
                 database_album_count=database_album_count,
-                message=f"Database has {database_album_count} albums but library folder is empty",
+                message=(
+                    f"Database has {database_album_count} albums "
+                    f"but library folder is empty"
+                ),
             )
 
         # Both have albums - check if counts match (rough heuristic)
@@ -320,7 +328,10 @@ class Tagger:
                 healthy=False,
                 library_album_count=library_album_count,
                 database_album_count=database_album_count,
-                message=f"Mismatch: {library_album_count} albums in folder, {database_album_count} in database",
+                message=(
+                    f"Mismatch: {library_album_count} in folder, "
+                    f"{database_album_count} in database"
+                ),
             )
 
         return LibraryHealth(
@@ -335,7 +346,8 @@ class Tagger:
         if not self.beets_db.exists():
             return 0
 
-        cmd = self._get_beet_command() + [
+        cmd = [
+            *self._get_beet_command(),
             "--config",
             str(self.beets_config),
             "ls",
@@ -375,7 +387,8 @@ class Tagger:
             return False, "No albums found in library to rebuild from"
 
         # Run beets import with --noautotag to just register files
-        cmd = self._get_beet_command() + [
+        cmd = [
+            *self._get_beet_command(),
             "--config",
             str(self.beets_config),
             "import",

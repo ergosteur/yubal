@@ -58,9 +58,9 @@ def _print_metadata_table(tags: dict[str, str]) -> None:
     echo_info("")
     header_tag = typer.style("Tag", bold=True)
     header_val = typer.style("Value", bold=True)
-    typer.echo(
-        f"| {header_tag:<{tag_width + bold_offset}} | {header_val:<{val_width + bold_offset}} |"
-    )
+    tag_w = tag_width + bold_offset
+    val_w = val_width + bold_offset
+    typer.echo(f"| {header_tag:<{tag_w}} | {header_val:<{val_w}} |")
     echo_info(f"|{'-' * (tag_width + 2)}|{'-' * (val_width + 2)}|")
 
     for key, value in rows:
