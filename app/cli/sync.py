@@ -33,7 +33,7 @@ def _cli_progress_callback(event: ProgressEvent) -> None:
         else:
             echo_info(event.message)
     elif event.step == ProgressStep.STARTING:
-        echo_info(f"\n--- Starting ---")
+        echo_info("\n--- Starting ---")
         echo_info(event.message)
     elif event.step == ProgressStep.TAGGING:
         if "[beets]" in event.message:

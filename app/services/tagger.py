@@ -4,34 +4,16 @@ import json
 import os
 import subprocess
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 from app.constants import AUDIO_EXTENSIONS
-from app.core.progress import ProgressCallback, ProgressEvent, ProgressStep
-
-
-@dataclass
-class TagResult:
-    """Result of a tagging operation."""
-
-    success: bool
-    source_dir: Path
-    dest_dir: Path | None = None
-    album_name: str | None = None
-    artist_name: str | None = None
-    track_count: int = 0
-    error: str | None = None
-
-
-@dataclass
-class LibraryHealth:
-    """Result of a library health check."""
-
-    healthy: bool
-    library_album_count: int
-    database_album_count: int
-    message: str
+from app.core import (
+    LibraryHealth,
+    ProgressCallback,
+    ProgressEvent,
+    ProgressStep,
+    TagResult,
+)
 
 
 class Tagger:
@@ -78,7 +60,7 @@ class Tagger:
         if not audio_files:
             return TagResult(
                 success=False,
-                source_dir=source_dir,
+                source_dir=str(source_dir),
                 error="No audio files found in source directory",
             )
 
@@ -90,7 +72,7 @@ class Tagger:
             if result.returncode != 0:
                 return TagResult(
                     success=False,
-                    source_dir=source_dir,
+                    source_dir=str(source_dir),
                     error=f"Beets import failed: {result.stderr}",
                 )
 
@@ -100,27 +82,27 @@ class Tagger:
 
             return TagResult(
                 success=True,
-                source_dir=source_dir,
-                dest_dir=dest_dir,
+                source_dir=str(source_dir),
+                dest_dir=str(dest_dir) if dest_dir else None,
                 track_count=track_count,
             )
 
         except subprocess.TimeoutExpired:
             return TagResult(
                 success=False,
-                source_dir=source_dir,
+                source_dir=str(source_dir),
                 error="Beets import timed out after 5 minutes",
             )
         except FileNotFoundError as e:
             return TagResult(
                 success=False,
-                source_dir=source_dir,
+                source_dir=str(source_dir),
                 error=f"Beets module not found. Error: {e}",
             )
         except Exception as e:
             return TagResult(
                 success=False,
-                source_dir=source_dir,
+                source_dir=str(source_dir),
                 error=f"Unexpected error during tagging: {e!s}",
             )
 
@@ -536,9 +518,11 @@ class Tagger:
             process.wait(timeout=600)  # 10 minutes for large imports
 
             if process.returncode == 0:
-                return True, f"Successfully imported {imported_count} album(s)", imported_count
+                msg = f"Successfully imported {imported_count} album(s)"
+                return True, msg, imported_count
             else:
-                return False, f"Import failed with return code {process.returncode}", 0
+                msg = f"Import failed with return code {process.returncode}"
+                return False, msg, 0
 
         except subprocess.TimeoutExpired:
             return False, "Import timed out after 10 minutes", 0

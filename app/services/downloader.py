@@ -1,7 +1,6 @@
 """YouTube Music downloader using yt-dlp Python API."""
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -9,42 +8,14 @@ import yt_dlp
 from yt_dlp.postprocessor.metadataparser import MetadataParserPP
 
 from app.constants import AUDIO_EXTENSIONS
-from app.core.progress import ProgressCallback, ProgressEvent, ProgressStep
-
-
-@dataclass
-class TrackInfo:
-    """Information about a single track."""
-
-    title: str
-    artist: str
-    track_number: int
-    duration: int  # seconds
-    filename: str | None = None
-
-
-@dataclass
-class AlbumInfo:
-    """Information about an album/playlist."""
-
-    title: str
-    artist: str
-    year: int | None
-    track_count: int
-    tracks: list[TrackInfo] = field(default_factory=list)
-    playlist_id: str = ""
-    url: str = ""
-
-
-@dataclass
-class DownloadResult:
-    """Result of a download operation."""
-
-    success: bool
-    album_info: AlbumInfo | None
-    output_dir: Path
-    downloaded_files: list[Path] = field(default_factory=list)
-    error: str | None = None
+from app.core import (
+    AlbumInfo,
+    DownloadResult,
+    ProgressCallback,
+    ProgressEvent,
+    ProgressStep,
+    TrackInfo,
+)
 
 
 class Downloader:
@@ -186,24 +157,22 @@ class Downloader:
             return DownloadResult(
                 success=True,
                 album_info=album_info,
-                output_dir=output_dir,
-                downloaded_files=all_files,
+                output_dir=str(output_dir),
+                downloaded_files=[str(f) for f in all_files],
             )
 
         except yt_dlp.DownloadError as e:
             return DownloadResult(
                 success=False,
                 album_info=album_info,
-                output_dir=output_dir,
-                downloaded_files=[],
+                output_dir=str(output_dir),
                 error=str(e),
             )
         except Exception as e:
             return DownloadResult(
                 success=False,
                 album_info=album_info,
-                output_dir=output_dir,
-                downloaded_files=[],
+                output_dir=str(output_dir),
                 error=f"Unexpected error: {e!s}",
             )
 

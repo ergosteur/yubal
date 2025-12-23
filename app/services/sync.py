@@ -2,24 +2,11 @@
 
 import shutil
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 
-from app.core.progress import ProgressCallback, ProgressEvent, ProgressStep
-from app.services.downloader import AlbumInfo, DownloadResult, Downloader
-from app.services.tagger import TagResult, Tagger
-
-
-@dataclass
-class SyncResult:
-    """Result of a sync operation."""
-
-    success: bool
-    download_result: DownloadResult | None = None
-    tag_result: TagResult | None = None
-    album_info: AlbumInfo | None = None
-    destination: Path | None = None
-    error: str | None = None
+from app.core import ProgressCallback, ProgressEvent, ProgressStep, SyncResult
+from app.services.downloader import Downloader
+from app.services.tagger import Tagger
 
 
 class SyncService:
@@ -100,13 +87,14 @@ class SyncService:
                 )
 
             if progress_callback:
+                track_count = len(download_result.downloaded_files)
                 progress_callback(
                     ProgressEvent(
                         step=ProgressStep.DOWNLOADING,
-                        message=f"Downloaded {len(download_result.downloaded_files)} tracks",
+                        message=f"Downloaded {track_count} tracks",
                         progress=100.0,
                         details={
-                            "track_count": len(download_result.downloaded_files),
+                            "track_count": track_count,
                             "album": download_result.album_info.title
                             if download_result.album_info
                             else None,

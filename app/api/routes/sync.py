@@ -1,7 +1,6 @@
 """Sync API routes."""
 
 import asyncio
-import json
 from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter
@@ -10,7 +9,7 @@ from fastapi.responses import StreamingResponse
 from app.core.config import DEFAULT_BEETS_CONFIG, DEFAULT_LIBRARY_DIR
 from app.core.progress import ProgressEvent
 from app.schemas.progress import ProgressEventSchema
-from app.schemas.sync import AlbumInfoSchema, SyncRequest, SyncResponse
+from app.schemas.sync import SyncRequest, SyncResponse
 from app.services.sync import SyncService
 
 router = APIRouter()
@@ -30,6 +29,7 @@ async def sync_album(request: SyncRequest) -> StreamingResponse:
 
     async def event_generator() -> AsyncGenerator[str, None]:
         queue: asyncio.Queue[ProgressEvent | None] = asyncio.Queue()
+        event_id = 0
 
         def progress_callback(event: ProgressEvent) -> None:
             """Thread-safe callback that puts events in the queue."""
@@ -58,7 +58,7 @@ async def sync_album(request: SyncRequest) -> StreamingResponse:
         while True:
             try:
                 event = await asyncio.wait_for(queue.get(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Send keepalive comment
                 yield ": keepalive\n\n"
                 continue
@@ -67,38 +67,29 @@ async def sync_album(request: SyncRequest) -> StreamingResponse:
                 # Sync completed, break out of loop
                 break
 
-            # Convert event to schema and send
+            event_id += 1
             event_data = ProgressEventSchema(
                 step=event.step.value,
                 message=event.message,
                 progress=event.progress,
                 details=event.details if event.details else None,
             )
-            yield f"data: {event_data.model_dump_json()}\n\n"
+            yield f"id: {event_id}\ndata: {event_data.model_dump_json()}\n\n"
 
         # Get the final result
         result = await task
 
-        # Build response schema
-        album_schema = None
-        if result.album_info:
-            album_schema = AlbumInfoSchema(
-                title=result.album_info.title,
-                artist=result.album_info.artist,
-                year=result.album_info.year,
-                track_count=result.album_info.track_count,
-            )
-
         response = SyncResponse(
             success=result.success,
-            album=album_schema,
-            destination=str(result.destination) if result.destination else None,
+            album=result.album_info,
+            destination=result.destination,
             track_count=result.tag_result.track_count if result.tag_result else 0,
             error=result.error,
         )
 
-        # Send final result event
-        yield f"event: complete\ndata: {response.model_dump_json()}\n\n"
+        # Send final result event with ID
+        event_id += 1
+        yield f"id: {event_id}\nevent: complete\ndata: {response.model_dump_json()}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -134,19 +125,10 @@ async def sync_album_blocking(request: SyncRequest) -> SyncResponse:
         None,  # No progress callback for blocking mode
     )
 
-    album_schema = None
-    if result.album_info:
-        album_schema = AlbumInfoSchema(
-            title=result.album_info.title,
-            artist=result.album_info.artist,
-            year=result.album_info.year,
-            track_count=result.album_info.track_count,
-        )
-
     return SyncResponse(
         success=result.success,
-        album=album_schema,
-        destination=str(result.destination) if result.destination else None,
+        album=result.album_info,
+        destination=result.destination,
         track_count=result.tag_result.track_count if result.tag_result else 0,
         error=result.error,
     )
