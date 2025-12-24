@@ -9,7 +9,16 @@ interface ProgressSectionProps {
 
 const statusConfig: Record<
   ProgressStep,
-  { label: string; color: "default" | "primary" | "secondary" | "success" | "warning" | "danger" }
+  {
+    label: string;
+    color:
+      | "default"
+      | "primary"
+      | "secondary"
+      | "success"
+      | "warning"
+      | "danger";
+  }
 > = {
   idle: { label: "Idle", color: "default" },
   starting: { label: "Starting", color: "primary" },
@@ -33,7 +42,7 @@ export function ProgressSection({ status, progress }: ProgressSectionProps) {
           className="space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm text-default-500">Progress</span>
+            <span className="text-default-500 text-sm">Progress</span>
             <Chip color={config.color} variant="flat" size="sm">
               {config.label}
             </Chip>

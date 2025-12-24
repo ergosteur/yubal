@@ -36,7 +36,7 @@ export function ConsoleOutput({ logs }: ConsoleOutputProps) {
 
   if (logs.length === 0) {
     return (
-      <div className="console-output rounded-lg bg-[#1e1e2e] p-4 font-mono text-sm text-gray-500 h-64 flex items-center justify-center">
+      <div className="console-output flex h-64 items-center justify-center rounded-lg bg-[#1e1e2e] p-4 font-mono text-sm text-gray-500">
         Console output will appear here...
       </div>
     );
@@ -45,7 +45,7 @@ export function ConsoleOutput({ logs }: ConsoleOutputProps) {
   return (
     <div
       ref={containerRef}
-      className="console-output rounded-lg bg-[#1e1e2e] p-4 font-mono text-sm h-64 overflow-y-auto"
+      className="console-output h-64 overflow-y-auto rounded-lg bg-[#1e1e2e] p-4 font-mono text-sm"
     >
       <AnimatePresence initial={false}>
         {logs.map((log) => (
@@ -55,13 +55,13 @@ export function ConsoleOutput({ logs }: ConsoleOutputProps) {
             animate={{ opacity: 1, y: 0 }}
             className="flex gap-2 py-0.5"
           >
-            <span className="text-gray-500 shrink-0">
+            <span className="shrink-0 text-gray-500">
               [{formatTime(log.timestamp)}]
             </span>
             <span className={`shrink-0 ${stepColors[log.step]}`}>
               [{log.step.toUpperCase()}]
             </span>
-            <span className="text-gray-200 break-all">{log.message}</span>
+            <span className="break-all text-gray-200">{log.message}</span>
           </motion.div>
         ))}
       </AnimatePresence>

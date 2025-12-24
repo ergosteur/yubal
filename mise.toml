@@ -1,2 +1,4 @@
 [tools]
 deno = "latest"
+just = "1.45.0"
+uv = "0.9.18"

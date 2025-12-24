@@ -12,7 +12,8 @@ export default function App() {
   const { status, progress, logs, startSync, cancelSync, clearLogs } =
     useSync();
 
-  const isSyncing = status !== "idle" && status !== "complete" && status !== "error";
+  const isSyncing =
+    status !== "idle" && status !== "complete" && status !== "error";
   const canSync = isValidUrl(url) && !isSyncing;
 
   const handleSync = () => {
@@ -27,7 +28,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <Header />
 
       <main className="container mx-auto max-w-2xl px-4 py-8">
@@ -37,7 +38,7 @@ export default function App() {
             <div className="space-y-4">
               <UrlInput value={url} onChange={setUrl} disabled={isSyncing} />
 
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <SyncButton
                   onClick={handleSync}
                   isLoading={isSyncing}
@@ -71,14 +72,14 @@ export default function App() {
 
             {/* Console Output */}
             <div className="space-y-2">
-              <span className="text-sm text-default-500">Console Output</span>
+              <span className="text-default-500 text-sm">Console Output</span>
               <ConsoleOutput logs={logs} />
             </div>
           </CardBody>
         </Card>
 
         {/* Footer */}
-        <footer className="mt-8 text-center text-sm text-default-400">
+        <footer className="text-default-400 mt-8 text-center text-sm">
           <p>
             Downloads YouTube Music albums and organizes them with{" "}
             <a

@@ -6,7 +6,11 @@ interface SyncButtonProps {
   isDisabled: boolean;
 }
 
-export function SyncButton({ onClick, isLoading, isDisabled }: SyncButtonProps) {
+export function SyncButton({
+  onClick,
+  isLoading,
+  isDisabled,
+}: SyncButtonProps) {
   return (
     <Button
       color="primary"
