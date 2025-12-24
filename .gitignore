@@ -26,3 +26,9 @@ Thumbs.db
 **/*.pickle
 **/*.log
 /output/
+
+# Web frontend
+/web/node_modules/
+/web/dist/
+/web/.vite/
+/web/bun.lockb
