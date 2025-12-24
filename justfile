@@ -2,9 +2,11 @@
 
 set dotenv-load
 
+# List available commands
 default:
     @just --list
 
+# Run API + frontend dev servers
 dev:
     #!/usr/bin/env bash
     trap 'kill 0' EXIT
@@ -12,62 +14,65 @@ dev:
     just dev-web &
     wait
 
+# Run FastAPI backend with reload
 dev-api:
     uv run yubal serve --reload
 
+# Run Vite frontend
 dev-web:
     cd web && bun run dev
 
-## build
-
+# Build both apps
 build: build-api build-web
 
+# Build Python package
 build-api:
     uv build
 
+# Build frontend for production
 build-web:
     cd web && bun run build
 
-## lint
-
+# Lint both apps
 lint: lint-api lint-web
 
+# Lint Python with ruff
 lint-api:
     uv run ruff check .
 
+# Lint frontend with eslint
 lint-web:
     cd web && bun run lint
 
-## format
-
+# Format both apps
 format: format-api format-web
 
+# Format Python with ruff
 format-api:
-    uv run ruff check . --fix
     uv run ruff format .
+    uv run ruff check . --fix
 
+# Format frontend with prettier
 format-web:
-    cd web && bun run lint:fix
     cd web && bun run format
 
+# Check formatting without changes
 format-check: format-check-api format-check-web
 
+# Check Python formatting
 format-check-api:
     uv run ruff format --check .
 
+# Check frontend formatting
 format-check-web:
     cd web && bun run format:check
 
-## generate api
-
+# Generate TypeScript types from OpenAPI
 gen-api:
     cd web && bun run generate-api
 
-# Run all checks
-
+# Run all checks (lint + format)
 check: lint format-check
-
-## install
 
 # Install all dependencies
 install: install-api install-web
@@ -76,7 +81,7 @@ install: install-api install-web
 install-api:
     uv sync
 
-# Install web dependencies
+# Install frontend dependencies
 install-web:
     cd web && bun install
 
