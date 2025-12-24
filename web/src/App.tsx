@@ -1,9 +1,6 @@
 import { useState } from "react";
-import { Card, CardBody, Button } from "@heroui/react";
-import { Header } from "./components/Header";
+import { Button } from "@heroui/react";
 import { UrlInput, isValidUrl } from "./components/UrlInput";
-import { SyncButton } from "./components/SyncButton";
-import { ProgressSection } from "./components/ProgressSection";
 import { ConsoleOutput } from "./components/ConsoleOutput";
 import { useSync } from "./hooks/useSync";
 
@@ -15,6 +12,8 @@ export default function App() {
   const isSyncing =
     status !== "idle" && status !== "complete" && status !== "error";
   const canSync = isValidUrl(url) && !isSyncing;
+  const showSecondaryActions =
+    isSyncing || status === "complete" || status === "error";
 
   const handleSync = () => {
     if (canSync) {
@@ -28,70 +27,72 @@ export default function App() {
   };
 
   return (
-    <div className="bg-background min-h-screen">
-      <Header />
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <main className="w-full max-w-xl space-y-8">
+        {/* Header */}
+        <div className="space-y-2 text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            yubal
+          </h1>
+          <p className="text-default-500">YouTube Album Downloader</p>
+        </div>
 
-      <main className="container mx-auto max-w-2xl px-4 py-8">
-        <Card>
-          <CardBody className="space-y-6">
-            {/* URL Input Section */}
-            <div className="space-y-4">
-              <UrlInput value={url} onChange={setUrl} disabled={isSyncing} />
+        {/* Input Section */}
+        <div className="space-y-3">
+          <UrlInput value={url} onChange={setUrl} disabled={isSyncing} />
 
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <SyncButton
-                  onClick={handleSync}
-                  isLoading={isSyncing}
-                  isDisabled={!canSync}
-                />
-                {isSyncing && (
-                  <Button
-                    color="danger"
-                    variant="flat"
-                    onPress={cancelSync}
-                    className="w-full sm:w-auto"
-                  >
-                    Cancel
-                  </Button>
-                )}
-                {(status === "complete" || status === "error") && (
-                  <Button
-                    color="default"
-                    variant="flat"
-                    onPress={handleClear}
-                    className="w-full sm:w-auto"
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
+          <Button
+            color="primary"
+            size="lg"
+            onPress={handleSync}
+            isLoading={isSyncing}
+            isDisabled={!canSync}
+            className="w-full font-medium"
+          >
+            {isSyncing ? "Syncing..." : "Sync Album"}
+          </Button>
+
+          {showSecondaryActions && (
+            <div className="flex gap-2">
+              {isSyncing && (
+                <Button
+                  color="danger"
+                  variant="flat"
+                  onPress={cancelSync}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              )}
+              {(status === "complete" || status === "error") && (
+                <Button
+                  color="default"
+                  variant="flat"
+                  onPress={handleClear}
+                  className="flex-1"
+                >
+                  Clear
+                </Button>
+              )}
             </div>
+          )}
+        </div>
 
-            {/* Progress Section */}
-            <ProgressSection status={status} progress={progress} />
-
-            {/* Console Output */}
-            <div className="space-y-2">
-              <span className="text-default-500 text-sm">Console Output</span>
-              <ConsoleOutput logs={logs} />
-            </div>
-          </CardBody>
-        </Card>
+        {/* Console Output */}
+        <ConsoleOutput logs={logs} status={status} progress={progress} />
 
         {/* Footer */}
-        <footer className="text-default-400 mt-8 text-center text-sm">
-          <p>
-            Downloads YouTube Music albums and organizes them with{" "}
-            <a
-              href="https://beets.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              beets
-            </a>
-          </p>
-        </footer>
+        <p className="text-default-500 text-center text-sm">
+          Powered by{" "}
+          <a
+            href="https://beets.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            beets
+          </a>
+        </p>
       </main>
     </div>
   );

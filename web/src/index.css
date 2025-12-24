@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@plugin "./hero.ts";
+@source "../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
+@custom-variant dark (&:is(.dark *));
 
 /* Terminal scrollbar styling */
 .console-output::-webkit-scrollbar {
@@ -6,14 +9,14 @@
 }
 
 .console-output::-webkit-scrollbar-track {
-  background: #1e1e2e;
+  background: #0d0d0d;
 }
 
 .console-output::-webkit-scrollbar-thumb {
-  background: #45475a;
+  background: #333;
   border-radius: 4px;
 }
 
 .console-output::-webkit-scrollbar-thumb:hover {
-  background: #585b70;
+  background: #444;
 }

@@ -15,16 +15,16 @@ export function UrlInput({ value, onChange, disabled }: UrlInputProps) {
   return (
     <Input
       type="url"
-      label="YouTube Music URL"
-      placeholder="https://music.youtube.com/playlist?list=..."
+      placeholder="Paste YouTube Music URL..."
       value={value}
       onValueChange={onChange}
       isDisabled={disabled}
       isInvalid={!isValid}
       errorMessage={!isValid ? "Enter a valid YouTube Music URL" : undefined}
-      description="Paste a YouTube Music album or playlist URL"
+      size="lg"
       classNames={{
         input: "text-base",
+        inputWrapper: "bg-default-100",
       }}
     />
   );

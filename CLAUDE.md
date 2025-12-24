@@ -8,7 +8,8 @@
 
 ### Web
 
-- Use HeroUI components whenever possible.
+- Use components from @heroui/react.
+- HeroUI v2 docs: https://www.heroui.com/docs
 - Prefer defining single-file components.
 - Make use of tailwindcss, tailwind-merge, tailwind-variants.
 - Use openapi-fetch with the generated schemas from FastAPI.
