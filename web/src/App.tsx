@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@heroui/react";
-import { Download, Youtube } from "lucide-react";
+import { Download, X, Music2 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { UrlInput } from "./components/UrlInput";
 import { isValidUrl } from "./utils/url";
@@ -80,7 +80,7 @@ export default function App() {
         {/* Header - v0 style with YouTube icon and version */}
         <div className="mb-6 flex items-center gap-2">
           <div className="bg-primary/10 rounded-lg p-2">
-            <Youtube className="text-primary h-5 w-5" />
+            <Music2 className="text-primary h-5 w-5" />
           </div>
           <div>
             <h1 className="text-foreground font-mono text-lg font-semibold">
@@ -105,6 +105,16 @@ export default function App() {
           >
             {!isSyncing && <Download className="h-4 w-4" />}
           </Button>
+          {isSyncing && (
+            <Button
+              color="danger"
+              isIconOnly
+              onPress={cancelSync}
+              className="h-10 w-10"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Album Info Card */}
@@ -121,29 +131,17 @@ export default function App() {
         {/* Console Output */}
         <ConsoleOutput logs={logs} status={status} />
 
-        {/* Secondary Actions */}
-        {(isSyncing || status === "complete" || status === "error") && (
-          <div className="mt-4 flex gap-2">
-            {isSyncing && (
-              <Button
-                color="danger"
-                variant="flat"
-                onPress={cancelSync}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            )}
-            {(status === "complete" || status === "error") && (
-              <Button
-                color="default"
-                variant="flat"
-                onPress={handleClear}
-                className="flex-1"
-              >
-                Clear
-              </Button>
-            )}
+        {/* Clear Button */}
+        {(status === "complete" || status === "error") && (
+          <div className="mt-4">
+            <Button
+              color="default"
+              variant="flat"
+              onPress={handleClear}
+              className="w-full"
+            >
+              Clear
+            </Button>
           </div>
         )}
 
