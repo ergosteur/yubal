@@ -4,17 +4,24 @@
 
 ### API
 
-- Run `just gen-api` if there have been API changes.
+- Run `just gen-api` (from project root) if there have been API changes.
+- Jobs
+  - Support job queuing and in-memory persistance of jobs.
+  - We always want to run one job at a time, sequentially. Avoid multiple youtube downloads and beet imports at the same time.
+  - Executing a job should download from yt-dlp and then process with beets.
 
 ### Web
 
 - Use components from @heroui/react.
 - HeroUI v2 docs: https://www.heroui.com/docs
+- Prefer using HeroUI component variants to customize HeroUI components.
+- Use HeroUI-defined semantic colors always when overriding HeroUI or custom components.
+- Make use of tailwindcss.
 - Prefer defining single-file components.
-- Make use of tailwindcss, tailwind-merge, tailwind-variants.
 - Use openapi-fetch with the generated schemas from FastAPI.
 
 ### General
+
 - Lint and format after finishing modifying source code.
   - Use the justfile commands.
   - If only typescript has been modified, run only the format and lintingn for typescript
@@ -23,6 +30,10 @@
 
 
 ## justfile commands
+
+- The following recipes from `just` are available.
+- Always execute them from the project root folder, where the justfile is located.
+
 ```bash
 Available recipes:
     build            # Build both apps
