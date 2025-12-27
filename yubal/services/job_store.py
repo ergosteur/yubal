@@ -2,7 +2,6 @@ import asyncio
 import uuid
 from collections import OrderedDict
 from datetime import UTC, datetime
-from typing import Any
 
 from yubal.core.enums import JobStatus
 from yubal.core.models import AlbumInfo, Job, LogEntry
@@ -143,9 +142,6 @@ class JobStore:
         status: JobStatus | None = None,
         progress: float | None = None,
         album_info: AlbumInfo | None = None,
-        current_track: int | None = None,
-        total_tracks: int | None = None,
-        error: str | None = None,
         started_at: datetime | None = None,
         completed_at: datetime | None = None,
     ) -> Job | None:
@@ -165,12 +161,6 @@ class JobStore:
                 job.progress = progress
             if album_info is not None:
                 job.album_info = album_info
-            if current_track is not None:
-                job.current_track = current_track
-            if total_tracks is not None:
-                job.total_tracks = total_tracks
-            if error is not None:
-                job.error = error
             if started_at is not None:
                 job.started_at = started_at
             if completed_at is not None:
@@ -191,10 +181,8 @@ class JobStore:
     async def add_log(
         self,
         job_id: str,
-        step: str,
+        status: str,
         message: str,
-        progress: float | None = None,
-        details: dict[str, Any] | None = None,
     ) -> None:
         """Add a log entry for a job."""
         async with self._lock:
@@ -208,10 +196,8 @@ class JobStore:
 
             entry = LogEntry(
                 timestamp=datetime.now(UTC),
-                step=step,
+                status=status,
                 message=message,
-                progress=progress,
-                details=details,
             )
 
             if job_id not in self._logs:
@@ -289,7 +275,6 @@ class JobStore:
             elapsed = datetime.now(UTC) - job.started_at
             if elapsed.total_seconds() > self.TIMEOUT_SECONDS:
                 job.status = JobStatus.FAILED
-                job.error = "Job timed out after 30 minutes"
                 job.completed_at = datetime.now(UTC)
                 if self._active_job_id == job.id:
                     self._active_job_id = None

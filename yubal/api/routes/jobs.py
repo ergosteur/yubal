@@ -110,25 +110,11 @@ async def run_sync_job(
                 progress=100.0,
                 album_info=result.album_info,
             )
-            await job_store.add_log(
-                job_id,
-                "completed",
-                complete_msg,
-                progress=100.0,
-                details={
-                    "destination": str(result.destination)
-                    if result.destination
-                    else None,
-                    "track_count": result.tag_result.track_count
-                    if result.tag_result
-                    else 0,
-                },
-            )
+            await job_store.add_log(job_id, "completed", complete_msg)
         else:
             await job_store.update_job(
                 job_id,
                 status=JobStatus.FAILED,
-                error=result.error,
             )
             await job_store.add_log(job_id, "failed", result.error or "Sync failed")
 
@@ -136,7 +122,6 @@ async def run_sync_job(
         await job_store.update_job(
             job_id,
             status=JobStatus.FAILED,
-            error=str(e),
         )
         await job_store.add_log(job_id, "failed", str(e))
 
@@ -167,12 +152,8 @@ async def _update_job_from_event(
     if event.step.value in ("completed", "failed"):
         return
 
-    # Extract track info and album_info from event details
+    # Parse album_info if provided as dict (from FETCHING_INFO event)
     details = event.details or {}
-    current_track = details.get("current_track")
-    total_tracks = details.get("total_tracks")
-
-    # Parse album_info if provided as dict (from STARTING event)
     album_info_data = details.get("album_info")
     album_info = None
     if album_info_data and isinstance(album_info_data, dict):
@@ -185,17 +166,9 @@ async def _update_job_from_event(
         job_id,
         status=new_status,
         progress=event.progress if event.progress is not None else None,
-        current_track=current_track,
-        total_tracks=total_tracks,
         album_info=album_info,
     )
-    await job_store.add_log(
-        job_id,
-        event.step.value,
-        event.message,
-        progress=event.progress,
-        details=event.details if event.details else None,
-    )
+    await job_store.add_log(job_id, event.step.value, event.message)
 
 
 @router.post(

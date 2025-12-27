@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -76,10 +75,8 @@ class LogEntry(BaseModel):
     """A log entry for a job."""
 
     timestamp: datetime
-    step: str
+    status: str
     message: str
-    progress: float | None = None
-    details: dict[str, Any] | None = None
 
 
 class Job(BaseModel):
@@ -93,9 +90,6 @@ class Job(BaseModel):
     status: JobStatus = JobStatus.PENDING
     progress: float = 0.0
     album_info: AlbumInfo | None = None
-    current_track: int | None = None
-    total_tracks: int | None = None
-    error: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None
     completed_at: datetime | None = None

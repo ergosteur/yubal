@@ -67,7 +67,6 @@ class SyncService:
                         step=ProgressStep.FETCHING_INFO,
                         message="Fetching album info...",
                         progress=0.0,
-                        details={"temp_dir": str(temp_dir)},
                     )
                 )
 
@@ -96,10 +95,7 @@ class SyncService:
                         step=ProgressStep.FETCHING_INFO,
                         message=f"Found {total_tracks} tracks: {album_info.title}",
                         progress=10.0,
-                        details={
-                            "album_info": album_info.model_dump(),
-                            "total_tracks": total_tracks,
-                        },
+                        details={"album_info": album_info.model_dump()},
                     )
                 )
 
@@ -132,12 +128,6 @@ class SyncService:
                         step=ProgressStep.DOWNLOADING,
                         message=event.message,
                         progress=album_progress,
-                        details={
-                            "current_track": track_idx + 1,  # 1-based for display
-                            "total_tracks": total_tracks,
-                            "track_progress": track_progress,
-                            **(event.details or {}),
-                        },
                     )
                 )
 
@@ -147,10 +137,6 @@ class SyncService:
                         step=ProgressStep.DOWNLOADING,
                         message="Starting download...",
                         progress=10.0,
-                        details={
-                            "current_track": 1,
-                            "total_tracks": total_tracks,
-                        },
                     )
                 )
 
@@ -193,12 +179,6 @@ class SyncService:
                         step=ProgressStep.DOWNLOADING,
                         message=f"Downloaded {track_count} tracks",
                         progress=90.0,
-                        details={
-                            "current_track": track_count,
-                            "total_tracks": total_tracks,
-                            "track_count": track_count,
-                            "album": album_info.title if album_info else None,
-                        },
                     )
                 )
 
@@ -242,12 +222,6 @@ class SyncService:
                         step=ProgressStep.COMPLETED,
                         message=f"Sync complete: {tag_result.dest_dir}",
                         progress=100.0,
-                        details={
-                            "destination": str(tag_result.dest_dir)
-                            if tag_result.dest_dir
-                            else None,
-                            "track_count": tag_result.track_count,
-                        },
                     )
                 )
 

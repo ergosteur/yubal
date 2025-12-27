@@ -9,7 +9,7 @@ interface ConsolePanelProps {
   jobs: Job[];
 }
 
-const stepColors: Record<string, string> = {
+const statusColors: Record<string, string> = {
   idle: "text-foreground-400",
   pending: "text-foreground-500",
   fetching_info: "text-foreground-500",
@@ -87,7 +87,7 @@ export function ConsolePanel({ logs, jobs }: ConsolePanelProps) {
                 <span className="text-foreground-400/50 shrink-0">
                   [{formatTime(log.timestamp)}]
                 </span>
-                <span className={stepColors[log.step] ?? "text-foreground"}>
+                <span className={statusColors[log.status] ?? "text-foreground"}>
                   {log.message}
                 </span>
               </motion.div>
