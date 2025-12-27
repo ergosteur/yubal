@@ -2,7 +2,7 @@ import { api } from "./client";
 import type { components } from "./schema";
 
 // Re-export types from schema
-export type JobLog = components["schemas"]["LogEntrySchema"];
+export type JobLog = components["schemas"]["LogEntry"];
 export type AlbumInfo = components["schemas"]["AlbumInfo"];
 
 export type JobStatus =
@@ -16,7 +16,7 @@ export type JobStatus =
   | "cancelled";
 
 // Override status field to use JobStatus instead of string
-export type Job = Omit<components["schemas"]["JobResponse"], "status"> & {
+export type Job = Omit<components["schemas"]["Job"], "status"> & {
   status: JobStatus;
 };
 
@@ -55,25 +55,16 @@ export async function createJob(
   return { success: true, jobId: data.id };
 }
 
-export async function getJob(jobId: string): Promise<Job | null> {
-  const { data, error } = await api.GET("/jobs/{job_id}", {
-    params: { path: { job_id: jobId } },
-  });
-
-  if (error) return null;
-  return data as Job;
-}
-
 export async function listJobs(): Promise<{
   jobs: Job[];
-  activeJobId: string | null;
+  logs: JobLog[];
 }> {
   const { data, error } = await api.GET("/jobs");
 
-  if (error) return { jobs: [], activeJobId: null };
+  if (error) return { jobs: [], logs: [] };
   return {
     jobs: data.jobs as Job[],
-    activeJobId: data.active_job_id ?? null,
+    logs: data.logs as JobLog[],
   };
 }
 

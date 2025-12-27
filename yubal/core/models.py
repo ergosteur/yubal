@@ -92,11 +92,9 @@ class Job(BaseModel):
     audio_format: str = "mp3"
     status: JobStatus = JobStatus.PENDING
     progress: float = 0.0
-    message: str = ""
     album_info: AlbumInfo | None = None
     current_track: int | None = None
     total_tracks: int | None = None
-    logs: list[LogEntry] = Field(default_factory=list)
     error: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     started_at: datetime | None = None

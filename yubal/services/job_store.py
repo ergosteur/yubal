@@ -12,11 +12,13 @@ class JobStore:
     """Thread-safe in-memory job store with capacity limit."""
 
     MAX_JOBS = 50
-    MAX_LOGS = 100
+    MAX_LOGS_PER_JOB = 100
+    MAX_TOTAL_LOGS = 500
     TIMEOUT_SECONDS = 30 * 60  # 30 minutes
 
     def __init__(self) -> None:
         self._jobs: OrderedDict[str, Job] = OrderedDict()
+        self._logs: dict[str, list[LogEntry]] = {}  # job_id -> logs
         self._lock = asyncio.Lock()
         self._active_job_id: str | None = None
         self._cancellation_requested: set[str] = set()
@@ -42,6 +44,7 @@ class JobStore:
                     return None  # Queue full, all jobs active/queued
                 oldest = min(pruneable, key=lambda j: j.created_at)
                 del self._jobs[oldest.id]
+                self._logs.pop(oldest.id, None)
                 self._cancellation_requested.discard(oldest.id)
 
             # Check if we should start immediately
@@ -122,7 +125,6 @@ class JobStore:
             # Mark as cancelled
             self._cancellation_requested.add(job_id)
             job.status = JobStatus.CANCELLED
-            job.message = "Job cancelled by user"
             job.completed_at = datetime.now(UTC)
 
             # Clear active job if it matches
@@ -140,7 +142,6 @@ class JobStore:
         job_id: str,
         status: JobStatus | None = None,
         progress: float | None = None,
-        message: str | None = None,
         album_info: AlbumInfo | None = None,
         current_track: int | None = None,
         total_tracks: int | None = None,
@@ -162,8 +163,6 @@ class JobStore:
                 job.status = status
             if progress is not None:
                 job.progress = progress
-            if message is not None:
-                job.message = message
             if album_info is not None:
                 job.album_info = album_info
             if current_track is not None:
@@ -197,7 +196,7 @@ class JobStore:
         progress: float | None = None,
         details: dict[str, Any] | None = None,
     ) -> None:
-        """Add a log entry to a job. Trims to MAX_LOGS if exceeded."""
+        """Add a log entry for a job."""
         async with self._lock:
             job = self._jobs.get(job_id)
             if not job:
@@ -214,11 +213,25 @@ class JobStore:
                 progress=progress,
                 details=details,
             )
-            job.logs.append(entry)
 
-            # Trim logs if exceeded
-            if len(job.logs) > self.MAX_LOGS:
-                job.logs = job.logs[-self.MAX_LOGS :]
+            if job_id not in self._logs:
+                self._logs[job_id] = []
+            self._logs[job_id].append(entry)
+
+            # Trim logs per job if exceeded
+            if len(self._logs[job_id]) > self.MAX_LOGS_PER_JOB:
+                self._logs[job_id] = self._logs[job_id][-self.MAX_LOGS_PER_JOB :]
+
+    async def get_all_logs(self) -> list[LogEntry]:
+        """Get all logs from all jobs, sorted chronologically."""
+        async with self._lock:
+            all_logs: list[LogEntry] = []
+            for job_id in self._jobs:
+                if job_id in self._logs:
+                    all_logs.extend(self._logs[job_id])
+            # Sort by timestamp and limit
+            all_logs.sort(key=lambda x: x.timestamp)
+            return all_logs[-self.MAX_TOTAL_LOGS :]
 
     async def delete_job(self, job_id: str) -> bool:
         """
@@ -239,7 +252,7 @@ class JobStore:
                 return False  # Cannot delete running job
 
             del self._jobs[job_id]
-            # Also remove from cancellation set if present
+            self._logs.pop(job_id, None)
             self._cancellation_requested.discard(job_id)
             return True
 
@@ -258,6 +271,7 @@ class JobStore:
             ]
             for job_id in to_remove:
                 del self._jobs[job_id]
+                self._logs.pop(job_id, None)
                 self._cancellation_requested.discard(job_id)
             return len(to_remove)
 

@@ -4,579 +4,479 @@
  */
 
 export interface paths {
-  "/api/health": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health Check */
+        get: operations["health_check_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Health Check */
-    get: operations["health_check_api_health_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/jobs": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Jobs
+         * @description List all jobs (oldest first, FIFO order).
+         *
+         *     Returns up to 50 jobs with their current status and all logs.
+         */
+        get: operations["list_jobs_jobs_get"];
+        put?: never;
+        /**
+         * Create Job
+         * @description Create a new sync job.
+         *
+         *     Jobs are queued and executed sequentially. Returns 409 only if queue is full.
+         */
+        post: operations["create_job_jobs_post"];
+        /**
+         * Clear Jobs
+         * @description Clear all completed/failed jobs.
+         *
+         *     Running jobs are not affected.
+         */
+        delete: operations["clear_jobs_jobs_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * List Jobs
-     * @description List all jobs (most recent first).
-     *
-     *     Returns up to 50 jobs with their current status.
-     */
-    get: operations["list_jobs_api_jobs_get"];
-    put?: never;
-    /**
-     * Create Job
-     * @description Create a new sync job.
-     *
-     *     Jobs are queued and executed sequentially. Returns 409 only if queue is full.
-     */
-    post: operations["create_job_api_jobs_post"];
-    /**
-     * Clear Jobs
-     * @description Clear all completed/failed jobs.
-     *
-     *     Running jobs are not affected.
-     */
-    delete: operations["clear_jobs_api_jobs_delete"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/jobs/{job_id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/jobs/{job_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Job
+         * @description Cancel a running or queued job.
+         *
+         *     Returns 404 if job not found, 409 if job already finished.
+         */
+        post: operations["cancel_job_jobs__job_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get Job
-     * @description Get a specific job by ID.
-     */
-    get: operations["get_job_api_jobs__job_id__get"];
-    put?: never;
-    post?: never;
-    /**
-     * Delete Job
-     * @description Delete a completed, failed, or cancelled job.
-     *
-     *     Running jobs cannot be deleted (returns 409).
-     */
-    delete: operations["delete_job_api_jobs__job_id__delete"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/jobs/{job_id}/cancel": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Job
+         * @description Delete a completed, failed, or cancelled job.
+         *
+         *     Running jobs cannot be deleted (returns 409).
+         */
+        delete: operations["delete_job_jobs__job_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Cancel Job
-     * @description Cancel a running or queued job.
-     *
-     *     Returns 404 if job not found, 409 if job already finished.
-     */
-    post: operations["cancel_job_api_jobs__job_id__cancel_post"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/jobs/{job_id}/stream": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Stream Job
-     * @description Stream job progress updates via SSE.
-     *
-     *     Immediately sends current job state, then streams updates until
-     *     job completes or client disconnects.
-     */
-    get: operations["stream_job_api_jobs__job_id__stream_get"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /**
-     * AlbumInfo
-     * @description Information about an album/playlist.
-     */
-    AlbumInfo: {
-      /** Title */
-      title: string;
-      /** Artist */
-      artist: string;
-      /** Year */
-      year?: number | null;
-      /** Track Count */
-      track_count: number;
-      /**
-       * Tracks
-       * @default []
-       */
-      tracks: components["schemas"]["TrackInfo"][];
-      /**
-       * Playlist Id
-       * @default
-       */
-      playlist_id: string;
-      /**
-       * Url
-       * @default
-       */
-      url: string;
-      /** Thumbnail Url */
-      thumbnail_url?: string | null;
+    schemas: {
+        /**
+         * AlbumInfo
+         * @description Information about an album/playlist.
+         */
+        AlbumInfo: {
+            /** Title */
+            title: string;
+            /** Artist */
+            artist: string;
+            /** Year */
+            year?: number | null;
+            /** Track Count */
+            track_count: number;
+            /**
+             * Tracks
+             * @default []
+             */
+            tracks: components["schemas"]["TrackInfo"][];
+            /**
+             * Playlist Id
+             * @default
+             */
+            playlist_id: string;
+            /**
+             * Url
+             * @default
+             */
+            url: string;
+            /** Thumbnail Url */
+            thumbnail_url?: string | null;
+        };
+        /**
+         * CancelJobResponse
+         * @description Response when a job is cancelled.
+         */
+        CancelJobResponse: {
+            /**
+             * Message
+             * @default Job cancelled
+             */
+            message: string;
+        };
+        /**
+         * ClearJobsResponse
+         * @description Response when jobs are cleared.
+         */
+        ClearJobsResponse: {
+            /** Cleared */
+            cleared: number;
+        };
+        /**
+         * CreateJobRequest
+         * @description Request to create a new sync job.
+         */
+        CreateJobRequest: {
+            /** Url */
+            url: string;
+            /**
+             * Audio Format
+             * @default mp3
+             */
+            audio_format: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HealthResponse
+         * @description Health check response model.
+         */
+        HealthResponse: {
+            /** Status */
+            status: string;
+        };
+        /**
+         * Job
+         * @description A background sync job.
+         */
+        Job: {
+            /** Id */
+            id: string;
+            /** Url */
+            url: string;
+            /**
+             * Audio Format
+             * @default mp3
+             */
+            audio_format: string;
+            /** @default pending */
+            status: components["schemas"]["JobStatus"];
+            /**
+             * Progress
+             * @default 0
+             */
+            progress: number;
+            album_info?: components["schemas"]["AlbumInfo"] | null;
+            /** Current Track */
+            current_track?: number | null;
+            /** Total Tracks */
+            total_tracks?: number | null;
+            /** Error */
+            error?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at?: string;
+            /** Started At */
+            started_at?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+        };
+        /**
+         * JobConflictError
+         * @description Error response when job creation is rejected.
+         */
+        JobConflictError: {
+            /**
+             * Error
+             * @default A job is already running
+             */
+            error: string;
+            /** Active Job Id */
+            active_job_id?: string | null;
+        };
+        /**
+         * JobCreatedResponse
+         * @description Response when a job is created.
+         */
+        JobCreatedResponse: {
+            /** Id */
+            id: string;
+            /**
+             * Message
+             * @default Job created
+             */
+            message: string;
+        };
+        /**
+         * JobListResponse
+         * @description Response for listing jobs.
+         */
+        JobListResponse: {
+            /** Jobs */
+            jobs: components["schemas"]["Job"][];
+            /**
+             * Logs
+             * @default []
+             */
+            logs: components["schemas"]["LogEntry"][];
+        };
+        /**
+         * JobStatus
+         * @description Status of a background job.
+         * @enum {string}
+         */
+        JobStatus: "pending" | "fetching_info" | "downloading" | "importing" | "completed" | "failed" | "cancelled";
+        /**
+         * LogEntry
+         * @description A log entry for a job.
+         */
+        LogEntry: {
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /** Step */
+            step: string;
+            /** Message */
+            message: string;
+            /** Progress */
+            progress?: number | null;
+            /** Details */
+            details?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * TrackInfo
+         * @description Information about a single track.
+         */
+        TrackInfo: {
+            /** Title */
+            title: string;
+            /** Artist */
+            artist: string;
+            /** Track Number */
+            track_number: number;
+            /** Duration */
+            duration: number;
+            /** Filename */
+            filename?: string | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
     };
-    /**
-     * CancelJobResponse
-     * @description Response when a job is cancelled.
-     */
-    CancelJobResponse: {
-      /**
-       * Message
-       * @default Job cancelled
-       */
-      message: string;
-    };
-    /**
-     * ClearJobsResponse
-     * @description Response when jobs are cleared.
-     */
-    ClearJobsResponse: {
-      /** Cleared */
-      cleared: number;
-    };
-    /**
-     * CreateJobRequest
-     * @description Request to create a new sync job.
-     */
-    CreateJobRequest: {
-      /** Url */
-      url: string;
-      /**
-       * Audio Format
-       * @default mp3
-       */
-      audio_format: string;
-    };
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components["schemas"]["ValidationError"][];
-    };
-    /**
-     * HealthResponse
-     * @description Health check response model.
-     */
-    HealthResponse: {
-      /** Status */
-      status: string;
-    };
-    /**
-     * Job
-     * @description A background sync job.
-     */
-    Job: {
-      /** Id */
-      id: string;
-      /** Url */
-      url: string;
-      /**
-       * Audio Format
-       * @default mp3
-       */
-      audio_format: string;
-      /** @default pending */
-      status: components["schemas"]["JobStatus"];
-      /**
-       * Progress
-       * @default 0
-       */
-      progress: number;
-      /**
-       * Message
-       * @default
-       */
-      message: string;
-      album_info?: components["schemas"]["AlbumInfo"] | null;
-      /** Current Track */
-      current_track?: number | null;
-      /** Total Tracks */
-      total_tracks?: number | null;
-      /** Logs */
-      logs?: components["schemas"]["LogEntry"][];
-      /** Error */
-      error?: string | null;
-      /**
-       * Created At
-       * Format: date-time
-       */
-      created_at?: string;
-      /** Started At */
-      started_at?: string | null;
-      /** Completed At */
-      completed_at?: string | null;
-    };
-    /**
-     * JobConflictError
-     * @description Error response when job creation is rejected.
-     */
-    JobConflictError: {
-      /**
-       * Error
-       * @default A job is already running
-       */
-      error: string;
-      /** Active Job Id */
-      active_job_id?: string | null;
-    };
-    /**
-     * JobCreatedResponse
-     * @description Response when a job is created.
-     */
-    JobCreatedResponse: {
-      /** Id */
-      id: string;
-      /**
-       * Message
-       * @default Job created
-       */
-      message: string;
-    };
-    /**
-     * JobListResponse
-     * @description Response for listing jobs.
-     */
-    JobListResponse: {
-      /** Jobs */
-      jobs: components["schemas"]["Job"][];
-      /** Active Job Id */
-      active_job_id?: string | null;
-    };
-    /**
-     * JobStatus
-     * @description Status of a background job.
-     * @enum {string}
-     */
-    JobStatus:
-      | "pending"
-      | "fetching_info"
-      | "downloading"
-      | "importing"
-      | "completed"
-      | "failed"
-      | "cancelled";
-    /**
-     * LogEntry
-     * @description A log entry for a job.
-     */
-    LogEntry: {
-      /**
-       * Timestamp
-       * Format: date-time
-       */
-      timestamp: string;
-      /** Step */
-      step: string;
-      /** Message */
-      message: string;
-      /** Progress */
-      progress?: number | null;
-      /** Details */
-      details?: {
-        [key: string]: unknown;
-      } | null;
-    };
-    /**
-     * TrackInfo
-     * @description Information about a single track.
-     */
-    TrackInfo: {
-      /** Title */
-      title: string;
-      /** Artist */
-      artist: string;
-      /** Track Number */
-      track_number: number;
-      /** Duration */
-      duration: number;
-      /** Filename */
-      filename?: string | null;
-    };
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[];
-      /** Message */
-      msg: string;
-      /** Error Type */
-      type: string;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  health_check_api_health_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    health_check_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    list_jobs_jobs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["HealthResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobListResponse"];
+                };
+            };
         };
-      };
     };
-  };
-  list_jobs_api_jobs_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    create_job_jobs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateJobRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobCreatedResponse"];
+                };
+            };
+            /** @description Queue is full */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobConflictError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    clear_jobs_jobs_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["JobListResponse"];
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClearJobsResponse"];
+                };
+            };
         };
-      };
     };
-  };
-  create_job_api_jobs_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    cancel_job_jobs__job_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CancelJobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateJobRequest"];
-      };
+    delete_job_jobs__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["JobCreatedResponse"];
-        };
-      };
-      /** @description Queue is full */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["JobConflictError"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  clear_jobs_api_jobs_delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ClearJobsResponse"];
-        };
-      };
-    };
-  };
-  get_job_api_jobs__job_id__get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        job_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Job"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  delete_job_api_jobs__job_id__delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        job_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  cancel_job_api_jobs__job_id__cancel_post: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        job_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["CancelJobResponse"];
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
-  stream_job_api_jobs__job_id__stream_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        job_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
-        };
-      };
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"];
-        };
-      };
-    };
-  };
 }

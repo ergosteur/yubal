@@ -1,16 +1,14 @@
 """Jobs API endpoints."""
 
 import asyncio
-from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
-from fastapi.responses import StreamingResponse
 
 from yubal.api.dependencies import SettingsDep
 from yubal.core.enums import JobStatus
-from yubal.core.models import AlbumInfo, Job
+from yubal.core.models import AlbumInfo
 from yubal.core.progress import ProgressEvent
 from yubal.schemas.jobs import (
     CancelJobResponse,
@@ -43,7 +41,6 @@ async def run_sync_job(
         job_id,
         status=JobStatus.FETCHING_INFO,
         started_at=datetime.now(UTC),
-        message="Fetching album info...",
     )
     await job_store.add_log(job_id, "fetching_info", f"Starting sync from: {url}")
 
@@ -111,7 +108,6 @@ async def run_sync_job(
                 job_id,
                 status=JobStatus.COMPLETED,
                 progress=100.0,
-                message=complete_msg,
                 album_info=result.album_info,
             )
             await job_store.add_log(
@@ -132,7 +128,6 @@ async def run_sync_job(
             await job_store.update_job(
                 job_id,
                 status=JobStatus.FAILED,
-                message=result.error or "Sync failed",
                 error=result.error,
             )
             await job_store.add_log(job_id, "failed", result.error or "Sync failed")
@@ -141,7 +136,6 @@ async def run_sync_job(
         await job_store.update_job(
             job_id,
             status=JobStatus.FAILED,
-            message=str(e),
             error=str(e),
         )
         await job_store.add_log(job_id, "failed", str(e))
@@ -195,7 +189,6 @@ async def _update_job_from_event(
         job_id,
         status=new_status,
         progress=event.progress if event.progress is not None else None,
-        message=event.message,
         current_track=current_track,
         total_tracks=total_tracks,
         album_info=album_info,
@@ -251,31 +244,14 @@ async def create_job(
 @router.get("/jobs", response_model=JobListResponse)
 async def list_jobs() -> JobListResponse:
     """
-    List all jobs (most recent first).
+    List all jobs (oldest first, FIFO order).
 
-    Returns up to 50 jobs with their current status.
+    Returns up to 50 jobs with their current status and all logs.
     """
     jobs = await job_store.get_all_jobs()
-    active_job = await job_store.get_active_job()
+    logs = await job_store.get_all_logs()
 
-    return JobListResponse(
-        jobs=jobs,
-        active_job_id=active_job.id if active_job else None,
-    )
-
-
-@router.get("/jobs/{job_id}", response_model=Job)
-async def get_job(job_id: str) -> Job:
-    """
-    Get a specific job by ID.
-    """
-    job = await job_store.get_job(job_id)
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found",
-        )
-    return job
+    return JobListResponse(jobs=jobs, logs=logs)
 
 
 @router.post("/jobs/{job_id}/cancel", response_model=CancelJobResponse)
@@ -320,67 +296,6 @@ async def cancel_job(job_id: str, settings: SettingsDep) -> CancelJobResponse:
         del task  # Fire-and-forget
 
     return CancelJobResponse()
-
-
-@router.get("/jobs/{job_id}/stream")
-async def stream_job(job_id: str) -> StreamingResponse:
-    """
-    Stream job progress updates via SSE.
-
-    Immediately sends current job state, then streams updates until
-    job completes or client disconnects.
-    """
-    job = await job_store.get_job(job_id)
-    if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job {job_id} not found",
-        )
-
-    async def event_generator() -> AsyncGenerator[str, None]:
-        event_id = 0
-        last_progress = -1.0
-        last_status = ""
-
-        while True:
-            current_job = await job_store.get_job(job_id)
-            if not current_job:
-                break
-
-            # Send update if progress or status changed
-            if (
-                current_job.progress != last_progress
-                or current_job.status.value != last_status
-            ):
-                last_progress = current_job.progress
-                last_status = current_job.status.value
-
-                event_id += 1
-                yield f"id: {event_id}\ndata: {current_job.model_dump_json()}\n\n"
-
-                # If job is finished, send complete event and exit
-                if current_job.status in (
-                    JobStatus.COMPLETED,
-                    JobStatus.FAILED,
-                    JobStatus.CANCELLED,
-                ):
-                    event_id += 1
-                    data = current_job.model_dump_json()
-                    yield f"id: {event_id}\nevent: complete\ndata: {data}\n\n"
-                    break
-
-            # Wait before next poll
-            await asyncio.sleep(0.5)
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
 
 
 @router.delete("/jobs", response_model=ClearJobsResponse)

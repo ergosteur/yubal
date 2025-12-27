@@ -42,7 +42,7 @@ lint-api:
 
 # Lint frontend with eslint
 lint-web:
-    cd web && bun run lint
+    cd web && bun run lint && bun run typecheck
 
 # Format both apps
 format: format-api format-web

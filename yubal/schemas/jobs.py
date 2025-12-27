@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from yubal.core.models import Job
+from yubal.core.models import Job, LogEntry
 
 
 class CreateJobRequest(BaseModel):
@@ -16,7 +16,7 @@ class JobListResponse(BaseModel):
     """Response for listing jobs."""
 
     jobs: list[Job]
-    active_job_id: str | None = None
+    logs: list[LogEntry] = []
 
 
 class JobCreatedResponse(BaseModel):

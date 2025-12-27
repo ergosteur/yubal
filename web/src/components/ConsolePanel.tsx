@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Terminal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { LogEntry, JobStatus } from "../hooks/useJobs";
+import type { Job, JobLog } from "../hooks/useJobs";
 import { Panel, PanelHeader, PanelTitle, PanelContent } from "./ui/Panel";
 
 interface ConsolePanelProps {
-  logs: LogEntry[];
-  status: JobStatus;
+  logs: JobLog[];
+  jobs: Job[];
 }
 
-const stepColors: Record<JobStatus, string> = {
+const stepColors: Record<string, string> = {
   idle: "text-foreground-400",
   pending: "text-foreground-500",
   fetching_info: "text-foreground-500",
@@ -20,8 +20,8 @@ const stepColors: Record<JobStatus, string> = {
   cancelled: "text-warning",
 };
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
+function formatTime(timestamp: string): string {
+  return new Date(timestamp).toLocaleTimeString("en-US", {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -37,13 +37,11 @@ function getTimestamp(): string {
   return `${h}:${m}:${s}`;
 }
 
-export function ConsolePanel({ logs, status }: ConsolePanelProps) {
+export function ConsolePanel({ logs, jobs }: ConsolePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isActive =
-    status !== "idle" &&
-    status !== "completed" &&
-    status !== "failed" &&
-    status !== "cancelled";
+  const isActive = jobs.some(
+    (j) => !["completed", "failed", "cancelled"].includes(j.status)
+  );
   const [currentTime, setCurrentTime] = useState(getTimestamp());
 
   useEffect(() => {
@@ -79,9 +77,9 @@ export function ConsolePanel({ logs, status }: ConsolePanelProps) {
           </div>
         ) : (
           <AnimatePresence initial={false}>
-            {logs.map((log) => (
+            {logs.map((log, idx) => (
               <motion.div
-                key={log.id}
+                key={`${log.timestamp}-${idx}`}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex gap-2"
@@ -89,7 +87,9 @@ export function ConsolePanel({ logs, status }: ConsolePanelProps) {
                 <span className="text-foreground-400/50 shrink-0">
                   [{formatTime(log.timestamp)}]
                 </span>
-                <span className={stepColors[log.step]}>{log.message}</span>
+                <span className={stepColors[log.step] ?? "text-foreground"}>
+                  {log.message}
+                </span>
               </motion.div>
             ))}
           </AnimatePresence>

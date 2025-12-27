@@ -1,26 +1,24 @@
 # CLAUDE.md
 
-## My Preferences
+## Decision Making
 
+- Be specific about the solution you are proposing. Show code examples and internal behavior.
+- Prompt before making importatn decisions. Provide as much information as possible. Give advice but lay out all possibilities.
+- Pragmatic over clever
+- Minimal dependencies
+- Modern Python (3.12+, Pydantic v2, etc.)
+- Question assumptions before implementing
+- When suggesting libraries, tools, or patterns:
+  - Compare 2-3 options with trade-offs before choosing
+  - Check maintenance status (last commit, open issues)
+  - Prefer modern, actively maintained solutions
+  - Consider what's already in the stack
+  - Don't just grab the first library that solves the problem.
 - Lint and format after finishing modifying source code.
   - Use the justfile commands.
   - If only typescript has been modified, run only the format and lintingn for typescript
   - If only backend has been modified, run only the format and linting for python
   - If both are modified. Format and lint everything
-- Pragmatic over clever
-- Minimal dependencies
-- Modern Python (3.12+, Pydantic v2, etc.)
-- Question assumptions before implementing
-
-## Decision Making
-
-When suggesting libraries, tools, or patterns:
-- Compare 2-3 options with trade-offs before choosing
-- Check maintenance status (last commit, open issues)
-- Prefer modern, actively maintained solutions
-- Consider what's already in the stack
-
-Don't just grab the first library that solves the problem.
 
 ## API guidelines
 

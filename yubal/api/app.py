@@ -19,14 +19,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown: cleanup resources
 
 
-def create_app() -> FastAPI:
-    """Create and configure the FastAPI application."""
-    settings = get_settings()
-
-    app = FastAPI(
+def create_api() -> FastAPI:
+    """Create the API sub-application."""
+    api = FastAPI(
         title="yubal API",
         description="YouTube Album Downloader API",
         version="0.1.0",
+    )
+
+    # Register exception handlers
+    register_exception_handlers(api)
+
+    # API routes
+    api.include_router(health.router)
+    api.include_router(jobs.router, tags=["jobs"])
+
+    return api
+
+
+def create_app() -> FastAPI:
+    """Create and configure the main FastAPI application."""
+    settings = get_settings()
+
+    app = FastAPI(
+        title="yubal",
         lifespan=lifespan,
         debug=settings.debug,
     )
@@ -40,12 +56,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Register exception handlers
-    register_exception_handlers(app)
-
-    # API routes
-    app.include_router(health.router, prefix="/api")
-    app.include_router(jobs.router, prefix="/api", tags=["jobs"])
+    # Mount API sub-app at /api
+    app.mount("/api", create_api())
 
     # Static files
     web_build = Path(__file__).parent.parent.parent / "web" / "dist"

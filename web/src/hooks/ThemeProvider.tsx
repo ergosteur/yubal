@@ -1,22 +1,5 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
-
-type Theme = "dark" | "light";
-
-interface ThemeContextValue {
-  theme: Theme;
-  toggle: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-const STORAGE_KEY = "yubal-theme";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { ThemeContext, STORAGE_KEY, type Theme } from "./ThemeContext";
 
 function getStoredTheme(): Theme {
   if (typeof window === "undefined") return "dark";
@@ -42,12 +25,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       <main className={themeClass}>{children}</main>
     </ThemeContext.Provider>
   );
-}
-
-export function useTheme(): ThemeContextValue {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
 }
