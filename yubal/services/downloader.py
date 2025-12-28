@@ -12,7 +12,7 @@ from yt_dlp.utils import DownloadCancelled
 from yubal.core.callbacks import ProgressCallback, ProgressEvent
 from yubal.core.constants import AUDIO_EXTENSIONS
 from yubal.core.enums import ProgressStep
-from yubal.core.models import AlbumInfo, DownloadResult, TrackInfo
+from yubal.core.models import AlbumInfo, DownloadResult
 
 
 class YtdlpLogger:
@@ -263,19 +263,6 @@ class Downloader:
 
         if "entries" in info:
             entries = list(info.get("entries", []))
-            tracks = []
-            for i, entry in enumerate(entries, 1):
-                if entry:
-                    tracks.append(
-                        TrackInfo(
-                            title=_eval(f"%(title|Track {i})s", entry),
-                            artist=_eval(
-                                "%(artists.0,artist,uploader|Unknown)s", entry
-                            ),
-                            track_number=i,
-                            duration=entry.get("duration") or 0,
-                        )
-                    )
 
             # For album artist: try playlist-level artists, then first entry's artist
             album_artist = _eval("%(artists.0,channel,uploader|)s", info)
@@ -313,8 +300,7 @@ class Downloader:
                 title=album_title,
                 artist=album_artist,
                 year=year,
-                track_count=len(tracks),
-                tracks=tracks,
+                track_count=len(entries),
                 playlist_id=_eval("%(id|)s", info),
                 url=url,
                 thumbnail_url=thumbnail_url,
@@ -326,14 +312,6 @@ class Downloader:
             artist=_eval("%(artists.0,artist,uploader|Unknown)s", info),
             year=self._extract_year(info),
             track_count=1,
-            tracks=[
-                TrackInfo(
-                    title=_eval("%(title|Unknown)s", info),
-                    artist=_eval("%(artists.0,artist|Unknown)s", info),
-                    track_number=1,
-                    duration=info.get("duration") or 0,
-                )
-            ],
             playlist_id=_eval("%(id|)s", info),
             url=url,
             thumbnail_url=self._extract_thumbnail(info),

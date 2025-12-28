@@ -5,16 +5,6 @@ from pydantic import BaseModel, Field
 from yubal.core.enums import JobStatus
 
 
-class TrackInfo(BaseModel):
-    """Information about a single track."""
-
-    title: str
-    artist: str
-    track_number: int
-    duration: int  # seconds
-    filename: str | None = None
-
-
 class AlbumInfo(BaseModel):
     """Information about an album/playlist."""
 
@@ -22,7 +12,6 @@ class AlbumInfo(BaseModel):
     artist: str
     year: int | None = None
     track_count: int
-    tracks: list[TrackInfo] = []
     playlist_id: str = ""
     url: str = ""
     thumbnail_url: str | None = None

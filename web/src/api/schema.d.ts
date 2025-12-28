@@ -117,11 +117,6 @@ export interface components {
       /** Track Count */
       track_count: number;
       /**
-       * Tracks
-       * @default []
-       */
-      tracks: components["schemas"]["TrackInfo"][];
-      /**
        * Playlist Id
        * @default
        */
@@ -277,22 +272,6 @@ export interface components {
       status: string;
       /** Message */
       message: string;
-    };
-    /**
-     * TrackInfo
-     * @description Information about a single track.
-     */
-    TrackInfo: {
-      /** Title */
-      title: string;
-      /** Artist */
-      artist: string;
-      /** Track Number */
-      track_number: number;
-      /** Duration */
-      duration: number;
-      /** Filename */
-      filename?: string | null;
     };
     /** ValidationError */
     ValidationError: {
