@@ -1,22 +1,13 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { ThemeContext, STORAGE_KEY, type Theme } from "./ThemeContext";
-
-function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === "light" ? "light" : "dark";
-}
+import { useCallback, type ReactNode } from "react";
+import { ThemeContext, type Theme } from "./ThemeContext";
+import { useLocalStorage } from "./useLocalStorage";
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(getStoredTheme);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
+  const [theme, setTheme] = useLocalStorage<Theme>("yubal-theme", "dark")
 
   const toggle = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  }, []);
+  }, [setTheme]);
 
   const themeClass = theme === "dark" ? "flexoki-dark" : "flexoki-light";
 

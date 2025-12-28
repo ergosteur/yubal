@@ -4,21 +4,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Job, JobLog } from "../hooks/useJobs";
 import { Panel, PanelHeader, PanelContent } from "./ui/Panel";
 import { isActive } from "../utils/job-status";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface ConsolePanelProps {
   logs: JobLog[];
   jobs: Job[];
 }
 
-const statusColors: Record<string, string> = {
-  pending: "text-foreground-500",
-  fetching_info: "text-foreground",
-  downloading: "text-primary",
-  importing: "text-secondary",
-  completed: "text-success",
-  failed: "text-danger",
-  cancelled: "text-warning",
-};
+function StatusIndicator({ status }: { status: string }) {
+  const colors: Record<string, string> = {
+    pending: "bg-foreground-500",
+    fetching_info: "bg-foreground",
+    downloading: "bg-primary",
+    importing: "bg-secondary",
+    completed: "bg-success",
+    failed: "bg-danger",
+    cancelled: "bg-warning",
+  };
+  const color = colors[status] ?? "bg-foreground-500";
+  return (
+    <span
+      className={`inline-flex h-2 w-2 animate-pulse rounded-full ${color}`}
+    />
+  );
+}
 
 function formatTime(timestamp: string): string {
   return new Date(timestamp).toLocaleTimeString("en-US", {
@@ -39,9 +48,20 @@ function getTimestamp(): string {
 
 export function ConsolePanel({ logs, jobs }: ConsolePanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const hasActiveJobs = jobs.some((j) => isActive(j.status));
+  const currentJob = jobs.find((j) => isActive(j.status));
+  const hasActiveJobs = !!currentJob;
   const [currentTime, setCurrentTime] = useState(getTimestamp());
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useLocalStorage("yubal-console-expanded", false);
+
+  const statusColors: Record<string, string> = {
+    pending: "text-foreground-500",
+    fetching_info: "text-foreground",
+    downloading: "text-primary",
+    importing: "text-secondary",
+    completed: "text-success",
+    failed: "text-danger",
+    cancelled: "text-warning",
+  };
 
   useEffect(() => {
     if (containerRef.current) {
@@ -64,7 +84,7 @@ export function ConsolePanel({ logs, jobs }: ConsolePanelProps) {
       className="hover:bg-content2 cursor-pointer select-none"
       onClick={() => setIsExpanded(!isExpanded)}
       leadingIcon={<Terminal size={18} />}
-      badge={<Terminal />}
+      badge={currentJob && <StatusIndicator status={currentJob.status} />}
       trailingIcon={
         <motion.div
           animate={{ rotate: isExpanded ? 180 : 0 }}
@@ -86,9 +106,7 @@ export function ConsolePanel({ logs, jobs }: ConsolePanelProps) {
     >
       {logs.length === 0 ? (
         <div className="flex h-full items-center justify-center">
-          <span className="text-foreground-400">
-            Awaiting YouTube URL...
-          </span>
+          <span className="text-foreground-400">Awaiting YouTube URL...</span>
         </div>
       ) : (
         <AnimatePresence initial={false}>

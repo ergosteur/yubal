@@ -8,5 +8,3 @@ export interface ThemeContextValue {
 }
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-export const STORAGE_KEY = "yubal-theme";
