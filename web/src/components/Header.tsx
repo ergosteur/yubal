@@ -1,13 +1,21 @@
-import { addToast, Button } from "@heroui/react";
-import { Cookie, Disc3, Moon, Sun } from "lucide-react";
+import {
+  addToast,
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownTrigger,
+} from "@heroui/react";
+import { Cookie, Disc3, Moon, Sun, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { getCookiesStatus, uploadCookies } from "../api/cookies";
+import { deleteCookies, getCookiesStatus, uploadCookies } from "../api/cookies";
 import { useTheme } from "../hooks/useTheme";
 
 export function Header() {
   const { theme, toggle } = useTheme();
   const [cookiesConfigured, setCookiesConfigured] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,6 +59,43 @@ export function Header() {
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteCookies();
+      if (success) {
+        setCookiesConfigured(false);
+        addToast({
+          title: "Cookies deleted",
+          description: "YouTube cookies removed",
+          color: "success",
+        });
+      } else {
+        addToast({
+          title: "Delete failed",
+          description: "Failed to delete cookies",
+          color: "danger",
+        });
+      }
+    } catch {
+      addToast({
+        title: "Delete failed",
+        description: "Could not delete cookies",
+        color: "danger",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDropdownAction = (key: React.Key) => {
+    if (key === "upload") {
+      fileInputRef.current?.click();
+    } else if (key === "delete") {
+      handleDelete();
+    }
+  };
+
   return (
     <header className="mb-6 flex items-center gap-3">
       <div className="border-primary/20 bg-primary/10 rounded-lg border p-2">
@@ -69,17 +114,49 @@ export function Header() {
         onChange={handleFileSelect}
         className="hidden"
       />
-      <Button
-        isIconOnly
-        variant="light"
-        aria-label="Upload cookies"
-        isLoading={isUploading}
-        onPress={() => fileInputRef.current?.click()}
-      >
-        <Cookie
-          className={`h-5 w-5 ${cookiesConfigured ? "text-success" : ""}`}
-        />
-      </Button>
+      {cookiesConfigured ? (
+        <Dropdown>
+          <DropdownTrigger>
+            <Button
+              isIconOnly
+              variant="light"
+              aria-label="Cookie options"
+              isLoading={isDeleting}
+            >
+              <Cookie className="text-success h-5 w-5" />
+            </Button>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Cookie actions"
+            onAction={handleDropdownAction}
+          >
+            <DropdownItem
+              key="upload"
+              startContent={<Upload className="h-4 w-4" />}
+            >
+              Upload new cookies
+            </DropdownItem>
+            <DropdownItem
+              key="delete"
+              color="danger"
+              className="text-danger"
+              startContent={<Trash2 className="h-4 w-4" />}
+            >
+              Delete cookies
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      ) : (
+        <Button
+          isIconOnly
+          variant="light"
+          aria-label="Upload cookies"
+          isLoading={isUploading}
+          onPress={() => fileInputRef.current?.click()}
+        >
+          <Cookie className="h-5 w-5" />
+        </Button>
+      )}
       <Button
         isIconOnly
         variant="light"
