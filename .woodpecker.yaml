@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/woodpecker-ci/woodpecker/main/pipeline/frontend/yaml/linter/schema/schema.json
+
+when:
+  event: push
+  branch: master
+
+steps:
+  - name: ci-checks
+    image: debian:bookworm-slim
+    environment:
+      PATH: /root/.local/share/mise/shims:/root/.local/bin:/usr/local/bin:/usr/bin:/bin
+    commands:
+      - apt update && apt install -y curl git
+      - curl https://mise.run | sh
+      - mise reshim
+      - mise trust
+      - mise install
+      - just install
+      - just check
