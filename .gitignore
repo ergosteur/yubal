@@ -182,8 +182,9 @@ pip-selfcheck.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,deno,react,visualstudiocode,macos,venv
 
-/data
+/data/
 /beets/
+/ytdlp/
 !/beets/config.yaml
 !/beets/secrets.example.yaml
 .env

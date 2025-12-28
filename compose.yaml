@@ -10,4 +10,5 @@ services:
     volumes:
       - ./data:/app/data
       - ./beets:/app/beets
+      - ./ytdlp:/app/ytdlp
     restart: unless-stopped

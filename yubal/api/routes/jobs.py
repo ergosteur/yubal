@@ -188,7 +188,9 @@ async def create_job(
 
     Jobs are queued and executed sequentially. Returns 409 only if queue is full.
     """
-    result = await job_store.create_job(request.url, request.audio_format)
+    audio_format = request.audio_format or settings.audio_format
+
+    result = await job_store.create_job(request.url, audio_format)
 
     if result is None:
         raise HTTPException(
@@ -203,7 +205,7 @@ async def create_job(
             run_sync_job,
             job.id,
             request.url,
-            request.audio_format,
+            audio_format,
             settings.library_dir,
             settings.beets_config,
         )

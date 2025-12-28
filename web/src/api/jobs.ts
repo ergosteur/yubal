@@ -30,12 +30,9 @@ export type CreateJobResult =
       activeJobId?: string;
     };
 
-export async function createJob(
-  url: string,
-  audioFormat = "mp3"
-): Promise<CreateJobResult> {
+export async function createJob(url: string): Promise<CreateJobResult> {
   const { data, error, response } = await api.POST("/jobs", {
-    body: { url, audio_format: audioFormat },
+    body: { url },
   });
 
   if (error) {

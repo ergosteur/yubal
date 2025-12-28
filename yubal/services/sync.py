@@ -2,6 +2,8 @@ import shutil
 from collections.abc import Callable
 from pathlib import Path
 
+from mutagen import File as MutagenFile
+
 from yubal.core.callbacks import ProgressCallback, ProgressEvent
 from yubal.core.enums import ProgressStep
 from yubal.core.models import AlbumInfo, SyncResult
@@ -11,6 +13,30 @@ from yubal.settings import get_settings
 
 # Type for cancellation check function
 CancelCheck = Callable[[], bool]
+
+
+def _get_file_bitrate(file_path: Path) -> int | None:
+    """Get actual bitrate from audio file using mutagen."""
+    try:
+        audio = MutagenFile(str(file_path))
+        if not audio or not audio.info:
+            return None
+
+        # Most formats have bitrate directly
+        if hasattr(audio.info, "bitrate") and audio.info.bitrate:
+            return audio.info.bitrate // 1000
+
+        # FLAC: calculate from sample rate, bits, channels
+        if hasattr(audio.info, "bits_per_sample"):
+            return (
+                audio.info.sample_rate
+                * audio.info.bits_per_sample
+                * audio.info.channels
+            ) // 1000
+
+    except Exception:  # noqa: S110  # Best-effort, non-critical
+        pass
+    return None
 
 
 class SyncService:
@@ -185,6 +211,14 @@ class SyncService:
                         progress=90.0,
                     )
                 )
+
+            # Get real bitrate from downloaded file
+            if download_result.downloaded_files and album_info:
+                real_bitrate = _get_file_bitrate(
+                    Path(download_result.downloaded_files[0])
+                )
+                if real_bitrate:
+                    album_info.audio_bitrate = real_bitrate
 
             # Phase 3: Import/Tag (90% → 100%)
             if progress_callback:

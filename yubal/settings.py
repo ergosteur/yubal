@@ -33,6 +33,10 @@ class Settings(BaseSettings):
         default=_PROJECT_ROOT / "beets",
         description="Beets directory",
     )
+    ytdlp_dir: Path = Field(
+        default=_PROJECT_ROOT / "ytdlp",
+        description="yt-dlp config directory (cookies, etc.)",
+    )
 
     # Audio settings (opus = best quality/size, no transcoding when source matches)
     audio_format: str = Field(default="opus", description="Audio format")
@@ -58,6 +62,10 @@ class Settings(BaseSettings):
     @property
     def library_dir(self) -> Path:
         return self.data_dir
+
+    @property
+    def cookies_file(self) -> Path:
+        return self.ytdlp_dir / "cookies.txt"
 
 
 @lru_cache

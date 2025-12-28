@@ -9,7 +9,7 @@ class CreateJobRequest(BaseModel):
     """Request to create a new sync job."""
 
     url: str
-    audio_format: str = "mp3"
+    audio_format: str | None = None  # None = use server default
 
 
 class JobListResponse(BaseModel):

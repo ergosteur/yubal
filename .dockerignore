@@ -19,6 +19,7 @@ data
 beets/beets.db
 beets/secrets.yaml
 beets/beets_import.log
+ytdlp/cookies.txt
 
 # IDE
 .vscode

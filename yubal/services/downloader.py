@@ -12,6 +12,7 @@ from yt_dlp.utils import DownloadCancelled
 from yubal.core.callbacks import ProgressCallback, ProgressEvent
 from yubal.core.enums import ProgressStep
 from yubal.core.models import AlbumInfo, DownloadResult
+from yubal.settings import get_settings
 
 
 class YtdlpLogger:
@@ -398,7 +399,7 @@ class Downloader:
             ]
         )
 
-        return {
+        ydl_opts: dict[str, Any] = {
             "format": "bestaudio/best",
             "remote_components": ["ejs:github"],
             "outtmpl": str(output_dir / "%(playlist_index|0)02d - %(title)s.%(ext)s"),
@@ -408,3 +409,10 @@ class Downloader:
             "ignoreerrors": True,  # Continue on individual track errors
             "logger": YtdlpLogger(),
         }
+
+        # Use cookies if available (for Premium quality, bypassing rate limits, etc.)
+        cookies_file = get_settings().cookies_file
+        if cookies_file.exists():
+            ydl_opts["cookiefile"] = str(cookies_file)
+
+        return ydl_opts

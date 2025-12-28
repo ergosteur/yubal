@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 
 from yubal.api.exceptions import register_exception_handlers
-from yubal.api.routes import health, jobs
+from yubal.api.routes import cookies, health, jobs
 from yubal.settings import get_settings
 
 
@@ -39,6 +39,7 @@ def create_api() -> FastAPI:
     # API routes
     api.include_router(health.router)
     api.include_router(jobs.router, tags=["jobs"])
+    api.include_router(cookies.router)
 
     return api
 
