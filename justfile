@@ -87,7 +87,7 @@ install: install-api install-web
 install-api:
     uv sync
 install-web:
-    cd web && bun install
+    cd web && bun install --frozen-lockfile
 
 clean:
     rm -rf dist/ .pytest_cache/ .ruff_cache/ web/dist/ web/node_modules/.vite/
