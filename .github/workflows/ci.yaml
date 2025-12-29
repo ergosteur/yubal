@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+---
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v3
+        with:
+          version: 2025.12.12
+      - run: just install
+      - run: just check
