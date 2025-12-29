@@ -1,8 +1,10 @@
 """Application settings using pydantic-settings."""
 
 import tempfile
+from datetime import tzinfo
 from functools import lru_cache
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,6 +52,14 @@ class Settings(BaseSettings):
 
     # CORS settings
     cors_origins: list[str] = Field(default=["*"], description="Allowed CORS origins")
+
+    # Timezone for timestamps (IANA format, e.g., "UTC", "America/New_York")
+    tz: str = Field(default="UTC", description="Timezone for timestamps")
+
+    @property
+    def timezone(self) -> tzinfo:
+        """Get timezone object from tz string."""
+        return ZoneInfo(self.tz)
 
     @property
     def beets_config(self) -> Path:

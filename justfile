@@ -7,7 +7,8 @@ default:
 alias c := check
 alias f := format
 alias l := lint
-alias t := typecheck
+alias tc := typecheck
+alias t := test
 alias d := dev
 alias b := build-web
 alias i := install

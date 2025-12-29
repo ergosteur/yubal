@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
-from yubal.api.dependencies import JobStoreDep, SettingsDep, SyncServiceDep
+from yubal.api.dependencies import AudioFormatDep, JobStoreDep, SyncServiceDep
 from yubal.core.callbacks import ProgressEvent
 from yubal.core.enums import JobStatus
 from yubal.core.models import AlbumInfo
@@ -167,7 +167,7 @@ async def _update_job_from_event(
 async def create_job(
     request: CreateJobRequest,
     background_tasks: BackgroundTasks,
-    settings: SettingsDep,
+    audio_format: AudioFormatDep,
     job_store: JobStoreDep,
     sync_service: SyncServiceDep,
 ) -> JobCreatedResponse:
@@ -176,7 +176,7 @@ async def create_job(
 
     Jobs are queued and executed sequentially. Returns 409 only if queue is full.
     """
-    result = await job_store.create_job(request.url, settings.audio_format)
+    result = await job_store.create_job(request.url, audio_format)
 
     if result is None:
         raise HTTPException(
