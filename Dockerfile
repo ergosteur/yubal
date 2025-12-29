@@ -9,30 +9,37 @@ RUN bun run build
 # Deno binary (for yt-dlp)
 FROM denoland/deno:bin AS deno
 
+# Builder - install Python deps
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --no-dev --frozen --no-cache
+
 # Runtime
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM python:3.12-slim-bookworm
 WORKDIR /app
 
-# Install runtime deps
+ARG TARGETARCH
+
+# Install ffmpeg (johnvansickle static)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && apt-get install -y --no-install-recommends curl xz-utils \
+    && FFMPEG_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") \
+    && curl -L "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-${FFMPEG_ARCH}-static.tar.xz" \
+       | tar -xJ --strip-components=1 -C /usr/local/bin/ --wildcards '*/ffmpeg' '*/ffprobe' \
+    && apt-get purge -y curl xz-utils \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy deno binary
 COPY --from=deno /deno /usr/local/bin/deno
-
-# Install python deps
-COPY pyproject.toml uv.lock ./
-RUN uv sync --no-dev --frozen --no-cache \
-    && rm -rf /root/.cache
-
-# Copy app
-COPY yubal/ ./yubal/
+COPY --from=builder /app/.venv /app/.venv
 COPY --from=web /app/web/dist ./web/dist
+COPY yubal/ ./yubal/
 COPY beets/config.yaml ./beets/config.yaml
 
-ENV YUBAL_HOST=0.0.0.0 \
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    YUBAL_HOST=0.0.0.0 \
     YUBAL_PORT=8000 \
     YUBAL_DATA_DIR=/app/data \
     YUBAL_BEETS_DIR=/app/beets \
@@ -40,4 +47,4 @@ ENV YUBAL_HOST=0.0.0.0 \
 
 EXPOSE 8000
 
-CMD ["uv", "run", "python", "-m", "yubal"]
+CMD ["python", "-m", "yubal"]

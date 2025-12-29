@@ -91,8 +91,8 @@ install-web:
 
 # Docker
 docker-build:
-    docker build -t yubal .
-    docker images yubal | awk 'NR==2 {print "📦 Image size: " $7}'
+    docker build --no-cache -t yubal:just-docker-build .
+    docker images yubal:just-docker-build | awk 'NR==2 {print "📦 Image size: " $7}'
     @echo '✅ Docker build successful!'
 
 clean:
