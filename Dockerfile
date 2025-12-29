@@ -6,9 +6,6 @@ RUN bun install --frozen-lockfile
 COPY web/ ./
 RUN bun run build
 
-# Deno binary (for yt-dlp)
-FROM denoland/deno:bin AS deno
-
 # Builder - install Python deps
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 WORKDIR /app
@@ -22,17 +19,17 @@ WORKDIR /app
 ARG TARGETARCH
 ARG COMMIT_SHA=dev
 
-# Install ffmpeg (johnvansickle static)
+# Install ffmpeg (johnvansickle static) + deno
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl xz-utils \
+    && apt-get install -y --no-install-recommends curl xz-utils unzip \
     && FFMPEG_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") \
     && curl -L "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-${FFMPEG_ARCH}-static.tar.xz" \
        | tar -xJ --strip-components=1 -C /usr/local/bin/ --wildcards '*/ffmpeg' '*/ffprobe' \
-    && apt-get purge -y curl xz-utils \
+    && curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh \
+    && apt-get purge -y curl xz-utils unzip \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=deno /deno /usr/local/bin/deno
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=web /app/web/dist ./web/dist
 COPY yubal/ ./yubal/
