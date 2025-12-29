@@ -14,16 +14,18 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 WORKDIR /app
 
 # Install runtime deps
-RUN apt update \
-  && apt install -y --no-install-recommends ffmpeg \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Copy deno binary
 COPY --from=deno /deno /usr/local/bin/deno
 
 # Install python deps
 COPY pyproject.toml uv.lock ./
-RUN uv sync --no-dev --frozen
+RUN uv sync --no-dev --frozen --no-cache \
+    && rm -rf /root/.cache
 
 # Copy app
 COPY yubal/ ./yubal/
@@ -35,6 +37,7 @@ ENV YUBAL_HOST=0.0.0.0 \
     YUBAL_DATA_DIR=/app/data \
     YUBAL_BEETS_DIR=/app/beets \
     YUBAL_YTDLP_DIR=/app/ytdlp
+
 EXPOSE 8000
 
 CMD ["uv", "run", "python", "-m", "yubal"]

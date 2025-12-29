@@ -9,6 +9,8 @@ __pycache__
 .venv
 .pytest_cache
 .ruff_cache
+.coverage
+htmlcov
 
 # Node
 web/node_modules
@@ -19,13 +21,20 @@ data
 beets/beets.db
 beets/secrets.yaml
 beets/beets_import.log
-ytdlp/cookies.txt
+beets/*.json
+ytdlp/
 
 # IDE
 .vscode
 .idea
 
+# CI/Docker
+.github
+Dockerfile
+compose.yaml
+
 # Misc
-.env
+.env*
 *.log
 .DS_Store
+tests
