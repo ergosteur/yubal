@@ -1,7 +1,3 @@
-# Build args for version info
-ARG COMMIT_SHA=dev
-ENV COMMIT_SHA=$COMMIT_SHA
-
 # Build frontend
 FROM oven/bun:1-alpine AS web
 WORKDIR /app/web
@@ -24,6 +20,7 @@ FROM python:3.12-slim-bookworm
 WORKDIR /app
 
 ARG TARGETARCH
+ARG COMMIT_SHA=dev
 
 # Install ffmpeg (johnvansickle static)
 RUN apt-get update \
@@ -43,6 +40,7 @@ COPY beets/config.yaml ./beets/config.yaml
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
+    COMMIT_SHA=$COMMIT_SHA \
     YUBAL_HOST=0.0.0.0 \
     YUBAL_PORT=8000 \
     YUBAL_DATA_DIR=/app/data \
