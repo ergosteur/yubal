@@ -107,7 +107,14 @@ export function Header() {
           yubal
         </h1>
         <p className="text-foreground-500 font-mono text-xs">
-          v{__APP_VERSION__}
+          <a
+            href={`https://github.com/guillevc/yubal/releases/tag/v${__APP_VERSION__}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            v{__APP_VERSION__}
+          </a>
         </p>
       </div>
       <input
