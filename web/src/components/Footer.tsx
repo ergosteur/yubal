@@ -1,4 +1,4 @@
-import { GitCommit } from "lucide-react";
+import { GitBranch } from "lucide-react";
 
 export function Footer() {
   return (
@@ -22,7 +22,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="group text-primary/70 hover:text-primary"
             >
-              <GitCommit className="-mt-px inline h-4 w-4" />{" "}
+              <GitBranch className="-mt-px inline h-4 w-4" />{" "}
               <span className="group-hover:underline">
                 {__COMMIT_SHA__.slice(0, 7)}
               </span>
