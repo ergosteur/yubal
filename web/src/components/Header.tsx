@@ -106,7 +106,9 @@ export function Header() {
         <h1 className="text-foreground font-mono text-xl font-semibold tracking-tight">
           yubal
         </h1>
-        <p className="text-foreground-500 font-mono text-xs">v0.1.0</p>
+        <p className="text-foreground-500 font-mono text-xs">
+          v{__APP_VERSION__}
+        </p>
       </div>
       <input
         ref={fileInputRef}
