@@ -99,7 +99,7 @@ export function Header() {
 
   return (
     <header className="mb-6 flex items-center gap-3">
-      <div className="border-primary/20 bg-primary/10 rounded-lg border p-1">
+      <div className="border-primary-200 bg-background rounded-lg border-1 p-1">
         <Disc3 className="text-primary h-7 w-7" />
       </div>
       <div className="flex-1">
