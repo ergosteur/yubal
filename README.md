@@ -15,7 +15,7 @@ _Powered by yt-dlp and beets._
   <img src="docs/demo.gif" alt="Yubal Demo Interface" width="600">
 </picture>
 
-<sub>*GIF is at 3x speed*</sub>
+<sub>_GIF is at 3x speed_</sub>
 
 </div>
 
@@ -109,6 +109,18 @@ yubal is configured via Environment Variables.
 > [!NOTE]
 > **Audio Transcoding**
 > By default, yubal keeps the original `opus` stream from YouTube to maintain maximum quality and processing speed. Transcoding only occurs if you change `YUBAL_AUDIO_FORMAT` or if the source is not natively available in your chosen format.
+
+## 🗺️ Roadmap
+
+- [x] Cookies upload via Web UI
+- [x] Docker multi-arch support (amd64/arm64)
+- [x] Configurable audio format and quality
+- [ ] Batch import (multiple URLs at once)
+- [ ] Post-import webhook (trigger library scan on Gonic/Navidrome/Jellyfin)
+- [ ] Playlist support (download full playlists)
+- [ ] PWA support for mobile
+
+Have a feature request? [Open an issue](https://github.com/guillevc/yubal/issues)!
 
 ## 🤝 Acknowledgments
 
