@@ -117,8 +117,8 @@ yubal is configured via Environment Variables.
 - [x] Configurable audio format and quality
 - [ ] Batch import (multiple URLs at once)
 - [ ] Post-import webhook (trigger library scan on Gonic/Navidrome/Jellyfin)
-- [ ] Playlist support (download full playlists)
 - [ ] PWA support for mobile
+- [ ] (maybe) Playlist support (download full playlists)
 
 Have a feature request? [Open an issue](https://github.com/guillevc/yubal/issues)!
 
