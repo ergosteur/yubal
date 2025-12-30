@@ -1,5 +1,5 @@
 import { Button, Progress } from "@heroui/react";
-import { Clock, Loader2, CheckCircle, XCircle, X, Trash2 } from "lucide-react";
+import { CheckCircle, Clock, Loader2, Trash2, X, XCircle } from "lucide-react";
 import type { Job, JobStatus } from "../api/jobs";
 import { isActive, isFinished } from "../utils/job-status";
 
@@ -31,7 +31,7 @@ function getStatusIcon(status: JobStatus) {
 }
 
 function getProgressColor(
-  status: JobStatus,
+  status: JobStatus
 ): "default" | "primary" | "secondary" | "success" | "warning" | "danger" {
   switch (status) {
     case "downloading":
@@ -54,7 +54,6 @@ export function JobCard({ job, onCancel, onDelete }: JobCardProps) {
   const isJobFinished = isFinished(job.status);
   const showProgress = isRunning;
 
-  // Get display info - prefer album_info if available
   const title = job.album_info?.title || null;
   const artist = job.album_info?.artist || null;
   const year = job.album_info?.year || null;
@@ -65,11 +64,10 @@ export function JobCard({ job, onCancel, onDelete }: JobCardProps) {
 
   return (
     <div
-      className={`bg-content2 rounded-lg border px-3 py-2.5 transition-colors ${
-        job.status === "cancelled"
-          ? "border-divider opacity-50"
-          : "border-divider"
-      }`}
+      className={`bg-content2 rounded-lg border px-3 py-2.5 transition-colors ${job.status === "cancelled"
+        ? "border-divider opacity-50"
+        : "border-divider"
+        }`}
     >
       <div className="flex items-center gap-3">
         <div className="relative shrink-0">
@@ -85,47 +83,41 @@ export function JobCard({ job, onCancel, onDelete }: JobCardProps) {
             </div>
           )}
           {thumbnailUrl && (
-            <div className="bg-content2/80 absolute -right-1 -bottom-1 rounded-full p-0.5">
+            <div className="bg-content2/80 absolute -right-1 -bottom-1 rounded-full p-1">
               {getStatusIcon(job.status)}
             </div>
           )}
         </div>
-        <div className="min-w-0 flex-1">
+
+        <div className="min-w-0 flex-1 font-mono space-y-0.5">
           {title ? (
             <>
-              <p className="text-foreground truncate font-mono text-sm">
-                {title}
-              </p>
-              <div className="flex items-center gap-2">
-                <p className="text-foreground-500 truncate font-mono text-xs">
-                  {artist}
-                  {year && ` · ${year}`}
-                </p>
-                {trackCount && (
-                  <>
-                    <span className="text-foreground-400/30 text-xs">·</span>
-                    <span className="text-foreground-500/70 font-mono text-xs">
-                      {trackCount} tracks
-                    </span>
-                  </>
+              <div className="flex items-center gap-1.5 text-sm min-w-0">
+                <p className="text-foreground truncate min-w-0">{title}</p>
+                {year && (
+                  <span className="text-foreground-500 shrink-0">({year})</span>
                 )}
-                {isJobFinished && audioCodec && (
-                  <>
-                    <span className="text-foreground-400/30 text-xs">·</span>
-                    <span className="text-foreground-500/70 font-mono text-xs uppercase">
-                      {audioCodec}
-                      {audioBitrate && ` ${audioBitrate}kbps`}
-                    </span>
-                  </>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs min-w-0">
+                <p className="text-foreground-500 truncate min-w-0">{artist}</p>
+                {trackCount && (
+                  <span className="text-foreground-500 shrink-0">
+                    · {trackCount} tracks
+                  </span>
+                )}
+                {audioCodec && (
+                  <span className="text-foreground-500 shrink-0">
+                    · <span className="uppercase">{audioCodec}</span>
+                    {isJobFinished && audioBitrate && ` ${audioBitrate}kbps`}
+                  </span>
                 )}
               </div>
             </>
           ) : (
-            <p className="text-foreground-500 truncate font-mono text-xs">
-              {job.url}
-            </p>
+            <p className="text-foreground-500 truncate text-xs">{job.url}</p>
           )}
         </div>
+
         {isRunning && onCancel && (
           <Button
             variant="light"
@@ -149,6 +141,7 @@ export function JobCard({ job, onCancel, onDelete }: JobCardProps) {
           </Button>
         )}
       </div>
+
       {showProgress && (
         <div className="mt-2 flex items-center gap-2">
           <Progress
