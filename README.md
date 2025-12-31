@@ -86,6 +86,7 @@ Open your browser to `http://localhost:8000` and paste a YouTube Music album URL
 
 > [!TIP]
 > **Premium Quality & Age Restrictions**
+> 
 > To download age-restricted content or access higher bitrate audio (for Premium accounts), you must provide cookies:
 >
 > 1. Export your cookies using a browser extension. [See yt-dlp FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp)
