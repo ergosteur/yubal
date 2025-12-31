@@ -4,7 +4,7 @@
 
 **YouTube Music album downloader with Spotify metadata auto-tagging.**
 <br/>
-No accounts required.
+_No accounts required._
 
 [![CI Status](https://github.com/guillevc/yubal/actions/workflows/ci.yaml/badge.svg)](https://github.com/guillevc/yubal/actions/workflows/ci.yaml)
 [![GitHub Release](https://img.shields.io/github/v/release/guillevc/yubal)](https://github.com/guillevc/yubal/releases)
@@ -21,7 +21,7 @@ No accounts required.
 
 ## 📖 Overview
 
-**yubal** is a self-hosted web application that streamlines the process of building a local music library. Simply paste a YouTube Music album URL, and Yubal orchestrates a background pipeline to download the audio and apply high-quality metadata tags automatically.
+**yubal** is a self-hosted app for building a local music library. Paste a YouTube Music album URL, and yubal handles downloading, tagging, and album art — automatically.
 
 ### The Pipeline
 
@@ -47,7 +47,8 @@ YouTube Music ─────►│                  │        ├─01 - Track
 - **Web Interface:** Clean, responsive UI for submitting albums and monitoring real-time progress.
 - **Job Queue:** Integrated FIFO queue that processes downloads sequentially to ensure reliability and avoid rate limiting.
 - **Smart Auto-tagging:** Automatic metadata fetching via beets, enriched by Spotify's metadata for accurate tracklists and art.
-- **Format Configuration:** Optimized for `opus` (native YouTube quality), with optional transcoding for other formats.
+- **Format Configuration:** Optimized for `opus` (native YouTube quality), with optional transcoding for other formats
+- **Docker-ready:** Multi-arch support (amd64/arm64) for easy deployment.
 
 ## 🚀 Quick Start
 
@@ -103,7 +104,7 @@ yubal is configured via Environment Variables.
 | `YUBAL_BEETS_DIR`     | Location of beets db and config          | `/app/beets`     |
 | `YUBAL_YTDLP_DIR`     | Location of cookies.txt                  | `/app/ytdlp`     |
 | `YUBAL_AUDIO_FORMAT`  | Output audio codec (e.g., `opus`, `mp3`) | `opus`           |
-| `YUBAL_AUDIO_QUALITY` | Transcoding quality (VBR scale 0-9)      | `0` (Best)       |
+| `YUBAL_AUDIO_QUALITY` | Transcoding quality (VBR scale 0-10)     | `0` (Best)       |
 | `YUBAL_TZ`            | Timezone (IANA format)                   | `UTC`            |
 
 > [!NOTE]
@@ -123,6 +124,12 @@ yubal is configured via Environment Variables.
 
 Have a feature request? [Open an issue](https://github.com/guillevc/yubal/issues)!
 
+## 💜 Support
+
+If yubal is useful to you, consider supporting its development:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/guillevc)
+
 ## 🤝 Acknowledgments
 
 - **Color Scheme:** [Flexoki](https://stephango.com/flexoki) by Steph Ango.
@@ -130,8 +137,8 @@ Have a feature request? [Open an issue](https://github.com/guillevc/yubal/issues
 
 ## 📄 License
 
-This project is licensed under the [MIT License](https://www.google.com/search?q=LICENSE).
+[MIT](LICENSE)
 
-## ⚠️ Disclaimer
+---
 
-This software is provided for **personal archiving purposes only**. Users are responsible for complying with YouTube's Terms of Service and applicable copyright laws in their jurisdiction. The authors do not promote piracy and are not responsible for misuse of this software.
+<sub>This software is for personal archiving only. Users must comply with YouTube's Terms of Service and applicable copyright laws.</sub>
