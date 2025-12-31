@@ -5,15 +5,11 @@
 **YouTube Music album downloader with Spotify metadata auto-tagging.**
 <br/>
 No accounts required.
-<br/>
-_Powered by yt-dlp and beets._
 
 [![CI Status](https://github.com/guillevc/yubal/actions/workflows/ci.yaml/badge.svg)](https://github.com/guillevc/yubal/actions/workflows/ci.yaml)
 [![GitHub Release](https://img.shields.io/github/v/release/guillevc/yubal)](https://github.com/guillevc/yubal/releases)
 [![Docker Image](https://img.shields.io/badge/ghcr.io-blue?logo=docker&logoColor=white)](https://ghcr.io/guillevc/yubal)
-[![License: MIT](https://img.shields.io/badge/License-MIT-white)](LICENSE)
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/guillevc)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/guillevc)
 
 <picture>
   <img src="docs/demo.gif" alt="Yubal Demo Interface" width="600">
