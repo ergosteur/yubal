@@ -1,5 +1,6 @@
+import { ScrollShadow } from "@heroui/react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { forwardRef } from "react";
-import type { ReactNode, HTMLAttributes } from "react";
 
 export interface PanelProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -63,12 +64,15 @@ export interface PanelContentProps extends HTMLAttributes<HTMLDivElement> {
 export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(
   ({ children, className = "", ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={`border-divider border-t-small h-72 overflow-y-auto p-3 ${className}`}
-        {...props}
-      >
-        {children}
+      <div className="border-divider border-t-small">
+        <ScrollShadow
+          ref={ref}
+          orientation="vertical"
+          className={`h-72 p-3 ${className}`}
+          {...props}
+        >
+          {children}
+        </ScrollShadow>
       </div>
     );
   },
