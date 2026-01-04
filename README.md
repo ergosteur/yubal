@@ -44,11 +44,11 @@ YouTube Music ─────►│                  │        ├─01 - Track
 
 ## ✨ Features
 
-- **Web Interface:** Clean, responsive UI for submitting albums and monitoring real-time progress.
-- **Job Queue:** Integrated FIFO queue that processes downloads sequentially to ensure reliability and avoid rate limiting.
-- **Smart Auto-tagging:** Automatic metadata fetching via beets, enriched by Spotify's metadata for accurate tracklists and art.
+- **Web Interface:** Clean, responsive UI for submitting albums and monitoring real-time progress
+- **Job Queue:** Integrated FIFO queue that processes downloads sequentially to ensure reliability and avoid rate limiting
+- **Smart Auto-tagging:** Automatic metadata fetching via beets, enriched by Spotify's metadata for accurate tracklists and art
 - **Format Configuration:** Optimized for `opus` (native YouTube quality), with optional transcoding for other formats
-- **Docker-ready:** Multi-arch support (amd64/arm64) for easy deployment.
+- **Docker-ready:** Multi-arch support (amd64/arm64) for easy deployment
 
 ## 🚀 Quick Start
 
@@ -77,26 +77,26 @@ services:
 
 ```bash
 docker compose up -d
-
 ```
 
 ### 3. Start Downloading
 
 Open your browser to `http://localhost:8000` and paste a YouTube Music album URL.
 
-> [!TIP]
-> **Premium Quality & Age Restrictions**
-> 
-> To download age-restricted content or access higher bitrate audio (for Premium accounts), you must provide cookies:
->
-> 1. Export your cookies using a browser extension. [See yt-dlp FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp)
-> 2. Save the file as `cookies.txt`.
-> 3. Place it in your mounted `ytdlp` volume (or upload via the Web UI).
+### Cookies (Optional)
+
+To download age-restricted content or access higher bitrate audio (Premium accounts):
+
+1. Export your cookies using a browser extension. [See yt-dlp FAQ](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp)
+2. Save the file as `cookies.txt`
+3. Place it in your mounted `ytdlp` volume (or upload via the Web UI)
 
 > [!CAUTION]
-> **Cookie usage can backfire.** Paradoxically, authenticated requests may trigger stricter rate limiting from YouTube. Only use cookies if you need Premium quality or age-restricted content.
+> **Cookie usage can backfire.** Authenticated requests may trigger stricter rate limiting from YouTube.
 >
-> More info: [#3](https://github.com/guillevc/yubal/issues/3)
+> Using cookies may also put your YouTube account at risk. Use at your own discretion.
+>
+> More info: [#3](https://github.com/guillevc/yubal/issues/3) · [yt-dlp wiki](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#youtube)
 
 ## ⚙️ Configuration
 
