@@ -7,13 +7,12 @@ import {
   DropdownTrigger,
   Tooltip,
 } from "@heroui/react";
-import { Cookie, Disc3, Moon, Sun, Trash2, Upload } from "lucide-react";
+import { Cookie, Disc3, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { deleteCookies, getCookiesStatus, uploadCookies } from "../api/cookies";
-import { useTheme } from "../hooks/useTheme";
+import { AnimatedThemeToggler } from "./ui/AnimatedThemeToggler";
 
 export function Header() {
-  const { theme, toggle } = useTheme();
   const [cookiesConfigured, setCookiesConfigured] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -172,18 +171,7 @@ export function Header() {
           </Button>
         </Tooltip>
       )}
-      <Button
-        isIconOnly
-        variant="light"
-        aria-label="Toggle theme"
-        onPress={toggle}
-      >
-        {theme === "dark" ? (
-          <Moon className="h-5 w-5" />
-        ) : (
-          <Sun className="h-5 w-5" />
-        )}
-      </Button>
+      <AnimatedThemeToggler />
     </header>
   );
 }

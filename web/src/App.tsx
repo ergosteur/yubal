@@ -1,14 +1,14 @@
-import { useState } from "react";
 import { Button } from "@heroui/react";
 import { Download } from "lucide-react";
 import { motion } from "motion/react";
-import { UrlInput } from "./components/UrlInput";
-import { isValidUrl } from "./utils/url";
+import { useState } from "react";
 import { ConsolePanel } from "./components/ConsolePanel";
 import { DownloadsPanel } from "./components/DownloadsPanel";
-import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
+import { Header } from "./components/Header";
+import { UrlInput } from "./components/UrlInput";
 import { useJobs } from "./hooks/useJobs";
+import { isValidUrl } from "./utils/url";
 
 // Shared spring transition for appearance animations
 const appearTransition = {
