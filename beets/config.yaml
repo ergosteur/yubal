@@ -2,7 +2,7 @@
 directory: ../data
 library: ./beets.db
 
-plugins: fetchart embedart fromfilename spotify zero lastgenre
+plugins: fetchart embedart fromfilename deezer zero lastgenre
 
 threaded: yes
 asciify_paths: true
