@@ -36,16 +36,6 @@ export default function App() {
     await deleteJob(jobId);
   };
 
-  const startContent = match(urlType)
-    .with(UrlType.ALBUM, () => <Disc3 className="h-4 w-4" />)
-    .with(UrlType.PLAYLIST, () => <ListMusic className="h-4 w-4" />)
-    .otherwise(() => <Download className="h-4 w-4" />)
-
-  const children = match(urlType)
-    .with(UrlType.ALBUM, () => "Download album")
-    .with(UrlType.PLAYLIST, () => "Download playlist")
-    .otherwise(() => "Download")
-
   return (
     <div className="bg-background flex min-h-screen flex-col justify-center px-4 py-6">
       <div className="mx-auto w-full max-w-2xl">
@@ -67,15 +57,29 @@ export default function App() {
           <div className="flex-1">
             <UrlInput value={url} onChange={setUrl} />
           </div>
-          <Badge color="secondary" content="beta" size="sm" isInvisible={urlType != UrlType.PLAYLIST}>
+          <Badge
+            color="secondary"
+            content="beta"
+            size="sm"
+            isInvisible={urlType != UrlType.PLAYLIST}
+          >
             <Button
               color="primary"
               radius="full"
+              variant={canSync ? "shadow" : "solid"}
               onPress={handleSync}
               isDisabled={!canSync}
-              startContent={startContent}
+              startContent={match(urlType)
+                .with(UrlType.ALBUM, () => <Disc3 className="h-4 w-4" />)
+                .with(UrlType.PLAYLIST, () => <ListMusic className="h-4 w-4" />)
+                .otherwise(() => (
+                  <Download className="h-4 w-4" />
+                ))}
             >
-              {children}
+              {match(urlType)
+                .with(UrlType.ALBUM, () => "Download album")
+                .with(UrlType.PLAYLIST, () => "Download playlist")
+                .otherwise(() => "Download")}
             </Button>
           </Badge>
         </motion.section>
