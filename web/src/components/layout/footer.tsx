@@ -13,16 +13,16 @@ export function Footer() {
           href="https://github.com/guillevc"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-primary/70 hover:text-primary hover:underline"
+          className="text-primary hover:underline"
         >
           guillevc
         </a>
-        {" · "}
+        {" · Support via "}
         <a
           href="https://ko-fi.com/guillevc"
           target="_blank"
           rel="noopener noreferrer"
-          className="group text-primary/70 hover:text-[#FF5E5B]"
+          className="group text-primary hover:text-[#FF5E5B]"
         >
           <KofiIcon className="-mt-px inline h-4 w-4" />{" "}
           <span className="group-hover:underline">Ko-fi</span>
@@ -34,7 +34,7 @@ export function Footer() {
           href="https://github.com/yt-dlp/yt-dlp"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-foreground-500 hover:underline"
+          className="hover:text-foreground hover:underline"
         >
           yt-dlp
         </a>
@@ -43,7 +43,7 @@ export function Footer() {
           href="https://github.com/beetbox/beets"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-foreground-500 hover:underline"
+          className="hover:text-foreground hover:underline"
         >
           beets
         </a>

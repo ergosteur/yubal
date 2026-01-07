@@ -102,21 +102,20 @@ export function Header() {
 
   return (
     <header className="mb-6 flex items-center gap-3">
-      <div className="border-primary-200 bg-background rounded-lg border-1 p-1">
-        <Disc3 className="text-primary h-7 w-7" />
-      </div>
+      <Disc3 className="text-primary h-8 w-8" />
       <div className="flex-1">
-        <h1 className="text-foreground font-mono text-xl font-semibold tracking-tight">
+        <h1 className="text-foreground font-mono text-lg font-semibold">
           yubal
         </h1>
-        <p className="font-mono text-xs">
+        <p className="font-mono text-xs tracking-wide">
           <a
             href={`https://github.com/guillevc/yubal/${__IS_RELEASE__ ? `releases/tag/${__VERSION__}` : `commit/${__COMMIT_SHA__}`}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary/70 hover:text-primary underline-offset-2 transition-colors hover:underline"
+            className="text-primary underline-offset-2 transition-colors hover:underline"
           >
-            {__VERSION__}
+            <span className="hidden sm:inline">{__VERSION__}</span>
+            <span className="sm:hidden">{__VERSION__.split("-")[0]}</span>
           </a>
         </p>
       </div>
