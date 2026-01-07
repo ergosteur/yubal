@@ -101,7 +101,7 @@ export function Header() {
   };
 
   return (
-    <header className="mb-6 flex items-center gap-3">
+    <header className="mb-5 flex items-center gap-3">
       <Disc3 className="text-primary h-8 w-8" />
       <div className="min-w-0 flex-1">
         <h1 className="text-foreground truncate font-mono text-lg font-semibold">
