@@ -6,7 +6,6 @@ overwriting the raw metadata that yt-dlp embeds.
 
 import base64
 from collections.abc import Sequence
-from io import BytesIO
 from pathlib import Path
 
 import httpx
@@ -17,7 +16,6 @@ from mutagen.id3 import APIC, ID3
 from mutagen.mp4 import MP4Cover
 from mutagen.oggopus import OggOpus
 from mutagen.oggvorbis import OggVorbis
-from PIL import Image
 
 from yubal.services.metadata_enricher import TrackMetadata
 
@@ -29,66 +27,114 @@ class MetadataPatcher:
         """Detect image format from magic bytes."""
         if data[:3] == b"\xff\xd8\xff":
             return "image/jpeg"
-        elif data[:8] == b"\x89PNG\r\n\x1a\n":
+        if data[:8] == b"\x89PNG\r\n\x1a\n":
             return "image/png"
-        elif data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
             return "image/webp"
-        return "image/jpeg"  # fallback
+        return "image/jpeg"
 
-    def _ensure_jpeg(self, data: bytes) -> bytes:
-        """Convert image to JPEG for maximum compatibility."""
-        mime = self._detect_mime_type(data)
-        if mime == "image/jpeg":
-            return data
+    def _force_jpeg_url(self, url: str) -> str:
+        """Request JPEG format from Google's image servers."""
+        if not url:
+            return url
+        if "googleusercontent.com" in url or "ytimg.com" in url:
+            return f"{url.split('=')[0]}=s544-rj"
+        return url
 
-        try:
-            img = Image.open(BytesIO(data))
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-            output = BytesIO()
-            img.save(output, format="JPEG", quality=95)
-            logger.debug("Converted {} to JPEG", mime)
-            return output.getvalue()
-        except Exception as e:
-            logger.warning("Failed to convert image: {}", e)
-            return data  # Return original if conversion fails
+    def _get_jpeg_dimensions(self, data: bytes) -> tuple[int, int]:
+        """Extract width/height from JPEG SOF marker.
+
+        Parses SOF0 (baseline) or SOF2 (progressive) markers.
+        Returns (width, height) or (0, 0) if parsing fails.
+        """
+        if len(data) < 11 or data[:2] != b"\xff\xd8":
+            return (0, 0)
+
+        pos = 2
+        while pos < len(data) - 9:
+            if data[pos] != 0xFF:
+                pos += 1
+                continue
+
+            marker = data[pos + 1]
+
+            # SOF0 (baseline) or SOF2 (progressive)
+            if marker in (0xC0, 0xC2):
+                height = int.from_bytes(data[pos + 5 : pos + 7], "big")
+                width = int.from_bytes(data[pos + 7 : pos + 9], "big")
+                return (width, height)
+
+            if marker == 0xD9:  # End of image
+                break
+
+            # Markers without length field
+            if 0xD0 <= marker <= 0xD8 or marker == 0x01:
+                pos += 2
+            else:
+                if pos + 4 > len(data):
+                    break
+                length = int.from_bytes(data[pos + 2 : pos + 4], "big")
+                pos += 2 + length
+
+        return (0, 0)
 
     def _download_artwork(self, url: str) -> bytes | None:
-        """Download artwork from URL."""
+        """Download artwork, requesting JPEG format from Google servers."""
+        jpeg_url = self._force_jpeg_url(url)
+
         try:
             with httpx.Client(timeout=10) as client:
+                response = client.get(jpeg_url)
+                response.raise_for_status()
+                data = response.content
+
+                if self._detect_mime_type(data) == "image/jpeg":
+                    return data
+
+                # Fallback to original URL only if we modified it
+                if jpeg_url == url:
+                    return data
+
+                logger.debug("JPEG request failed, trying original URL")
                 response = client.get(url)
                 response.raise_for_status()
                 return response.content
+
         except Exception as e:
             logger.debug("Failed to download artwork: {}", e)
             return None
 
+    def _create_picture(self, data: bytes, width: int, height: int) -> Picture:
+        """Create a FLAC-style Picture for Ogg/Opus/FLAC formats."""
+        pic = Picture()
+        pic.type = 3  # Front cover
+        pic.mime = "image/jpeg"
+        pic.width = width
+        pic.height = height
+        pic.depth = 24  # RGB
+        pic.data = data
+        return pic
+
     def _embed_artwork(self, file_path: Path, image_data: bytes) -> bool:
         """Embed artwork into audio file based on format."""
+        if self._detect_mime_type(image_data) != "image/jpeg":
+            logger.warning("Artwork is not JPEG format, skipping embed")
+            return False
+
         suffix = file_path.suffix.lower()
-
-        # Convert to JPEG for maximum compatibility
-        jpeg_data = self._ensure_jpeg(image_data)
-
-        # Get image dimensions for Picture metadata (required for Ogg/Opus/FLAC)
-        try:
-            img = Image.open(BytesIO(jpeg_data))
-            img_width, img_height = img.size
-        except Exception:
-            img_width, img_height = 0, 0
+        img_width, img_height = self._get_jpeg_dimensions(image_data)
 
         try:
             if suffix == ".mp3":
                 audio = ID3(str(file_path))
-                audio.delall("APIC")  # Remove existing artwork
+                audio.delall("APIC")
                 audio.add(
                     APIC(
-                        encoding=3,  # UTF-8
+                        encoding=3,
                         mime="image/jpeg",
-                        type=3,  # Front cover
+                        type=3,
                         desc="Cover",
-                        data=jpeg_data,
+                        data=image_data,
                     )
                 )
                 audio.save()
@@ -97,47 +143,23 @@ class MetadataPatcher:
                 audio = MutagenFile(str(file_path))
                 if audio is not None:
                     audio["covr"] = [
-                        MP4Cover(jpeg_data, imageformat=MP4Cover.FORMAT_JPEG)
+                        MP4Cover(image_data, imageformat=MP4Cover.FORMAT_JPEG)
                     ]
                     audio.save()
 
             elif suffix == ".flac":
                 audio = MutagenFile(str(file_path))
                 if audio is not None:
-                    pic = Picture()
-                    pic.type = 3  # Front cover
-                    pic.mime = "image/jpeg"
-                    pic.width = img_width
-                    pic.height = img_height
-                    pic.depth = 24  # RGB
-                    pic.data = jpeg_data
                     audio.clear_pictures()
-                    audio.add_picture(pic)
+                    audio.add_picture(
+                        self._create_picture(image_data, img_width, img_height)
+                    )
                     audio.save()
 
-            elif suffix == ".opus":
-                audio = OggOpus(str(file_path))
-                pic = Picture()
-                pic.type = 3
-                pic.mime = "image/jpeg"
-                pic.width = img_width
-                pic.height = img_height
-                pic.depth = 24  # RGB
-                pic.data = jpeg_data
-                audio["metadata_block_picture"] = [
-                    base64.b64encode(pic.write()).decode("ascii")
-                ]
-                audio.save()
-
-            elif suffix == ".ogg":
-                audio = OggVorbis(str(file_path))
-                pic = Picture()
-                pic.type = 3
-                pic.mime = "image/jpeg"
-                pic.width = img_width
-                pic.height = img_height
-                pic.depth = 24  # RGB
-                pic.data = jpeg_data
+            elif suffix in {".opus", ".ogg"}:
+                audio_cls = OggOpus if suffix == ".opus" else OggVorbis
+                audio = audio_cls(str(file_path))
+                pic = self._create_picture(image_data, img_width, img_height)
                 audio["metadata_block_picture"] = [
                     base64.b64encode(pic.write()).decode("ascii")
                 ]
@@ -159,33 +181,20 @@ class MetadataPatcher:
         metadata: TrackMetadata,
         playlist_name: str,
     ) -> bool:
-        """Update audio file metadata with enriched values.
-
-        Args:
-            file_path: Path to audio file
-            metadata: TrackMetadata from enricher
-            playlist_name: Playlist name (used as album fallback)
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Update audio file metadata with enriched values."""
         try:
-            # easy=True gives us format-agnostic tag access
             audio = MutagenFile(str(file_path), easy=True)
             if audio is None:
                 logger.warning("Could not open file for patching: {}", file_path)
                 return False
 
-            # Set common tags
             audio["title"] = metadata.title
             audio["artist"] = metadata.artist
             audio["album"] = metadata.album or playlist_name
             audio["albumartist"] = metadata.artist
             audio["tracknumber"] = str(metadata.track_number)
-
             audio.save()
 
-            # Embed album artwork if available
             if metadata.thumbnail_url:
                 logger.debug("Downloading artwork for: {}", file_path.name)
                 image_data = self._download_artwork(metadata.thumbnail_url)
@@ -213,18 +222,7 @@ class MetadataPatcher:
         track_metadata: Sequence[TrackMetadata],
         playlist_name: str,
     ) -> int:
-        """Patch multiple files with corresponding metadata.
-
-        Files must be in same order as track_metadata list.
-
-        Args:
-            file_paths: List of audio file paths (in playlist order)
-            track_metadata: List of TrackMetadata (in same order)
-            playlist_name: Playlist name for album fallback
-
-        Returns:
-            Number of successfully patched files
-        """
+        """Patch multiple files with corresponding metadata."""
         if len(file_paths) != len(track_metadata):
             logger.warning(
                 "File count ({}) doesn't match metadata count ({}). "
@@ -235,13 +233,11 @@ class MetadataPatcher:
             )
 
         patched = 0
-        paired_count = min(len(file_paths), len(track_metadata))
         for file_path, metadata in zip(file_paths, track_metadata, strict=False):
             if self.patch_file(file_path, metadata, playlist_name):
                 patched += 1
 
-        # Log results with clarity about unmatched files
-        unmatched = len(file_paths) - paired_count
+        unmatched = len(file_paths) - min(len(file_paths), len(track_metadata))
         if unmatched > 0:
             logger.warning(
                 "Patched {}/{} files ({} files had no matching metadata)",
