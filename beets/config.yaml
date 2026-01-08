@@ -3,7 +3,6 @@ __yubal:
   version: 0.1.1
 
 # actual beets config.yaml content
-directory: ../data
 library: ./beets.db
 
 plugins: fetchart embedart fromfilename deezer zero lastgenre
