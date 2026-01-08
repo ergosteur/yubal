@@ -36,20 +36,24 @@ packages = ["yubal"]
 target-version = "py312"
 line-length = 88
 exclude = [".venv", "__pycache__", ".git", "build", "dist", "web"]
+preview = true
 
 [tool.ruff.lint]
 select = [
-  "E",   # pycodestyle errors
-  "F",   # pyflakes
-  "I",   # isort
-  "B",   # bugbear
-  "UP",  # pyupgrade
-  "S",   # bandit security
-  "RUF", # ruff-specific
+  "E",      # pycodestyle errors
+  "F",      # pyflakes
+  "I",      # isort
+  "B",      # bugbear
+  "UP",     # pyupgrade
+  "S",      # bandit security
+  "RUF",    # ruff-specific
+  "PLC2701",  # import-private-name
 ]
 ignore = [
+  "S404", # subprocess module is used for internal tools
   "S603", # subprocess calls are internal tools, not untrusted
   "S607", # partial paths are fine for ffprobe/beets
+  "RUF029", # FastAPI requires async signatures even without await
 ]
 
 [tool.ruff.lint.per-file-ignores]
