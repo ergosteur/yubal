@@ -84,9 +84,21 @@ check: lint format-check typecheck test
 
 install: install-api install-web
 install-api:
-    uv sync
+    uv sync --frozen
 install-web:
     cd web && bun install --frozen-lockfile
+
+sync: sync-api sync-web
+sync-api:
+    uv sync
+sync-web:
+    cd web && bun install
+
+upgrade: upgrade-api upgrade-web
+upgrade-api:
+    uv lock --upgrade && uv sync
+upgrade-web:
+    cd web && bun update
 
 # Docker
 
@@ -101,11 +113,10 @@ docker-check-size:
 
 # Version
 version VERSION:
-    # Update pyproject.toml
     sed -i '' 's/^version = ".*"/version = "{{VERSION}}"/' pyproject.toml
-    # Update package.json
     cd web && npm pkg set version={{VERSION}}
-    git add pyproject.toml web/package.json
+    just sync
+    git add pyproject.toml uv.lock web/package.json web/bun.lock
     git commit -m "chore: bump version to {{VERSION}}"
     git tag v{{VERSION}}
 

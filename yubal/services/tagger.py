@@ -208,6 +208,8 @@ class Tagger:
             *self._get_beet_command(),
             "--config",
             str(self.beets_config),
+            "--directory",
+            str(self.library_dir),
             "import",
             str(source_dir),
         ]
