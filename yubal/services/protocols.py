@@ -12,9 +12,11 @@ class JobExecutionStore(Protocol):
 
     This protocol defines the minimal interface that JobExecutor needs,
     following the Interface Segregation Principle.
+
+    All methods are synchronous as they only operate on in-memory data.
     """
 
-    async def transition_job(
+    def transition_job(
         self,
         job_id: str,
         status: JobStatus,
@@ -26,6 +28,6 @@ class JobExecutionStore(Protocol):
         """Atomically update job status and add log entry."""
         ...
 
-    async def pop_next_pending(self) -> Job | None:
+    def pop_next_pending(self) -> Job | None:
         """Get and activate the next pending job."""
         ...

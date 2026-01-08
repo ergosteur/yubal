@@ -21,9 +21,9 @@ from yubal.services.job_store import JobStore
 router = APIRouter()
 
 
-async def _get_job_or_404(job_store: JobStore, job_id: str) -> Job:
+def _get_job_or_404(job_store: JobStore, job_id: str) -> Job:
     """Get job by ID or raise 404."""
-    job = await job_store.get_job(job_id)
+    job = job_store.get_job(job_id)
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -46,12 +46,11 @@ async def create_job(
     job_store: JobStoreDep,
     job_executor: JobExecutorDep,
 ) -> JobCreatedResponse:
-    """
-    Create a new sync job.
+    """Create a new sync job.
 
     Jobs are queued and executed sequentially. Returns 409 only if queue is full.
     """
-    result = await job_store.create_job(request.url, audio_format)
+    result = job_store.create_job(request.url, audio_format)
 
     if result is None:
         raise HTTPException(
@@ -69,13 +68,12 @@ async def create_job(
 
 @router.get("/jobs", response_model=JobListResponse)
 async def list_jobs(job_store: JobStoreDep) -> JobListResponse:
-    """
-    List all jobs (oldest first, FIFO order).
+    """List all jobs (oldest first, FIFO order).
 
     Returns up to 50 jobs with their current status and all logs.
     """
-    jobs = await job_store.get_all_jobs()
-    logs = await job_store.get_all_logs()
+    jobs = job_store.get_all_jobs()
+    logs = job_store.get_all_logs()
 
     return JobListResponse(jobs=jobs, logs=logs)
 
@@ -86,12 +84,11 @@ async def cancel_job(
     job_store: JobStoreDep,
     job_executor: JobExecutorDep,
 ) -> CancelJobResponse:
-    """
-    Cancel a running or queued job.
+    """Cancel a running or queued job.
 
     Returns 404 if job not found, 409 if job already finished.
     """
-    job = await _get_job_or_404(job_store, job_id)
+    job = _get_job_or_404(job_store, job_id)
 
     if job.status.is_finished:
         raise HTTPException(
@@ -102,7 +99,7 @@ async def cancel_job(
     # Signal cancellation via cancel token if job is running
     job_executor.cancel_job(job_id)
 
-    success = await job_store.cancel_job(job_id)
+    success = job_store.cancel_job(job_id)
     if not success:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -114,23 +111,21 @@ async def cancel_job(
 
 @router.delete("/jobs", response_model=ClearJobsResponse)
 async def clear_jobs(job_store: JobStoreDep) -> ClearJobsResponse:
-    """
-    Clear all completed/failed jobs.
+    """Clear all completed/failed jobs.
 
     Running jobs are not affected.
     """
-    count = await job_store.clear_completed()
+    count = job_store.clear_completed()
     return ClearJobsResponse(cleared=count)
 
 
 @router.delete("/jobs/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_job(job_id: str, job_store: JobStoreDep) -> None:
-    """
-    Delete a completed, failed, or cancelled job.
+    """Delete a completed, failed, or cancelled job.
 
     Running jobs cannot be deleted (returns 409).
     """
-    job = await _get_job_or_404(job_store, job_id)
+    job = _get_job_or_404(job_store, job_id)
 
     if not job.status.is_finished:
         raise HTTPException(
@@ -138,4 +133,4 @@ async def delete_job(job_id: str, job_store: JobStoreDep) -> None:
             detail="Cannot delete a running job",
         )
 
-    await job_store.delete_job(job_id)
+    job_store.delete_job(job_id)

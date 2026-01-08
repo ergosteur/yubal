@@ -72,7 +72,7 @@ class JobExecutor:
             if cancel_token.is_cancelled():
                 return
 
-            await self._job_store.transition_job(
+            self._job_store.transition_job(
                 job_id,
                 JobStatus.FETCHING_INFO,
                 f"Starting sync from: {url}",
@@ -98,24 +98,27 @@ class JobExecutor:
             )
 
             if cancel_token.is_cancelled():
-                await self._job_store.transition_job(
+                self._job_store.transition_job(
                     job_id, JobStatus.CANCELLED, "Job cancelled by user"
                 )
                 return
 
-            await self._finalize_job(job_id, result)
+            self._finalize_job(job_id, result)
 
         except Exception as e:
-            await self._job_store.transition_job(job_id, JobStatus.FAILED, str(e))
+            self._job_store.transition_job(job_id, JobStatus.FAILED, str(e))
 
         finally:
             self._cancel_tokens.pop(job_id, None)
-            await self._start_next_pending()
+            self._start_next_pending()
 
     def _create_progress_callback(
         self, job_id: str, cancel_token: CancelToken
     ) -> ProgressCallback:
-        """Create thread-safe progress callback for a job."""
+        """Create thread-safe progress callback for a job.
+
+        Progress updates from worker threads are scheduled on the event loop.
+        """
         loop = asyncio.get_running_loop()
 
         def callback(event: ProgressEvent) -> None:
@@ -123,11 +126,9 @@ class JobExecutor:
             if cancel_token.is_cancelled():
                 return
 
-            new_status = self._map_event_to_status(event)
+            # Schedule the update on the event loop (thread-safe)
             loop.call_soon_threadsafe(
-                lambda: asyncio.create_task(
-                    self._update_job_from_event(job_id, new_status, event, cancel_token)
-                )
+                self._update_job_from_event, job_id, event, cancel_token
             )
 
         return callback
@@ -144,14 +145,13 @@ class JobExecutor:
         }
         return status_map.get(event.step.value, JobStatus.DOWNLOADING)
 
-    async def _update_job_from_event(
+    def _update_job_from_event(
         self,
         job_id: str,
-        new_status: JobStatus,
         event: ProgressEvent,
         cancel_token: CancelToken,
     ) -> None:
-        """Update job state from progress event."""
+        """Update job state from progress event. Called from event loop."""
         if cancel_token.is_cancelled():
             return
 
@@ -159,9 +159,10 @@ class JobExecutor:
         if event.step.value in ("completed", "failed"):
             return
 
+        new_status = self._map_event_to_status(event)
         album_info = self._parse_album_info(event)
 
-        await self._job_store.transition_job(
+        self._job_store.transition_job(
             job_id,
             new_status,
             event.message,
@@ -181,7 +182,7 @@ class JobExecutor:
                 pass
         return None
 
-    async def _finalize_job(self, job_id: str, result: SyncResult) -> None:
+    def _finalize_job(self, job_id: str, result: SyncResult) -> None:
         """Update job with final sync result."""
         if result.success:
             if result.destination:
@@ -191,7 +192,7 @@ class JobExecutor:
             else:
                 complete_msg = "Sync complete"
 
-            await self._job_store.transition_job(
+            self._job_store.transition_job(
                 job_id,
                 JobStatus.COMPLETED,
                 complete_msg,
@@ -199,11 +200,11 @@ class JobExecutor:
                 album_info=result.album_info,
             )
         else:
-            await self._job_store.transition_job(
+            self._job_store.transition_job(
                 job_id, JobStatus.FAILED, result.error or "Sync failed"
             )
 
-    async def _start_next_pending(self) -> None:
+    def _start_next_pending(self) -> None:
         """Start the next pending job if any."""
-        if next_job := await self._job_store.pop_next_pending():
+        if next_job := self._job_store.pop_next_pending():
             self.start_job(next_job)

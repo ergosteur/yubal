@@ -22,7 +22,7 @@ class TestMetadataEnricher:
                     "videoId": "abc123",
                     "title": "Test Song",
                     "artists": [{"name": "Test Artist"}],
-                    "album": {"name": "Test Album"},
+                    "album": {"id": "album123", "name": "Test Album"},
                     "isAvailable": True,
                     "thumbnails": [{"url": "http://example.com/thumb.jpg"}],
                 }
@@ -58,7 +58,7 @@ class TestMetadataEnricher:
                     "videoId": "available1",
                     "title": "Available Track",
                     "artists": [{"name": "Artist"}],
-                    "album": {"name": "Album"},
+                    "album": {"id": "album1", "name": "Album"},
                     "isAvailable": True,
                     "thumbnails": [],
                 },

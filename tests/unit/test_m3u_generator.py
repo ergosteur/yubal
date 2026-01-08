@@ -98,7 +98,8 @@ class TestGenerateM3u:
             assert "#EXTINF:-1,Artist - Song One" in content
             assert "01 - Artist - Song One.opus" in content
 
-    def test_raises_on_mismatched_counts(self) -> None:
+    def test_handles_mismatched_counts_gracefully(self) -> None:
+        """When file count doesn't match metadata, generate M3U with available pairs."""
         with TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir)
 
@@ -106,18 +107,28 @@ class TestGenerateM3u:
                 output_dir / "01 - Artist - Song.opus",
                 output_dir / "02 - Artist - Song2.opus",
             ]
+            # Create the files
+            for f in track_files:
+                f.touch()
+
             track_metadata = [
                 self._make_track("id1", "Song", "Artist", 1),
-                # Missing second metadata
+                # Missing second metadata - will be skipped
             ]
 
-            with pytest.raises(ValueError, match="doesn't match"):
-                generate_m3u(
-                    playlist_name="Test",
-                    track_files=track_files,
-                    track_metadata=track_metadata,
-                    output_dir=output_dir,
-                )
+            # Should not raise, just log warning and generate with 1 track
+            result = generate_m3u(
+                playlist_name="Test",
+                track_files=track_files,
+                track_metadata=track_metadata,
+                output_dir=output_dir,
+            )
+
+            assert result.exists()
+            content = result.read_text()
+            # Only one EXTINF entry (matched pair)
+            assert content.count("#EXTINF") == 1
+            assert "Artist - Song" in content
 
     def test_sanitizes_playlist_name(self) -> None:
         with TemporaryDirectory() as tmpdir:

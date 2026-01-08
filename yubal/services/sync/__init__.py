@@ -8,6 +8,7 @@ from yubal.services.sync.progress import (
     NullProgressEmitter,
     ProgressEmitter,
 )
+from yubal.services.sync.temp_dir import job_temp_dir
 
 __all__ = [
     "AlbumSyncService",
@@ -16,4 +17,5 @@ __all__ = [
     "NullProgressEmitter",
     "PlaylistSyncService",
     "ProgressEmitter",
+    "job_temp_dir",
 ]

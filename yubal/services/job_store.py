@@ -1,4 +1,6 @@
-import asyncio
+"""In-memory job store with thread-safe operations."""
+
+import threading
 from collections import OrderedDict, defaultdict
 from datetime import datetime
 
@@ -9,6 +11,9 @@ from yubal.core.types import AudioFormat, Clock, IdGenerator, LogStatus
 
 class JobStore:
     """In-memory job store with capacity limit.
+
+    Thread-safe using threading.Lock. All operations are synchronous since
+    they only involve in-memory data structures with no I/O.
 
     This is a dumb persistence layer. State transitions are managed by JobExecutor.
     Cancellation signaling uses CancelToken; this store only persists the final status.
@@ -28,7 +33,7 @@ class JobStore:
         self._id_generator = id_generator
         self._jobs: OrderedDict[str, Job] = OrderedDict()
         self._logs: defaultdict[str, list[LogEntry]] = defaultdict(list)
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
         self._active_job_id: str | None = None
 
     def _remove_job_internal(self, job_id: str) -> None:
@@ -36,15 +41,14 @@ class JobStore:
         del self._jobs[job_id]
         self._logs.pop(job_id, None)
 
-    async def create_job(
+    def create_job(
         self, url: str, audio_format: AudioFormat = "opus"
     ) -> tuple[Job, bool] | None:
-        """
-        Create a new job.
+        """Create a new job.
 
         Returns (job, should_start_immediately) or None if queue is full.
         """
-        async with self._lock:
+        with self._lock:
             # Prune completed/failed jobs if at capacity
             while len(self._jobs) >= self.MAX_JOBS:
                 pruneable = [j for j in self._jobs.values() if j.status.is_finished]
@@ -69,25 +73,25 @@ class JobStore:
 
             return job, should_start
 
-    async def get_job(self, job_id: str) -> Job | None:
+    def get_job(self, job_id: str) -> Job | None:
         """Get a job by ID. Also checks for timeout."""
-        async with self._lock:
+        with self._lock:
             job = self._jobs.get(job_id)
             if job:
                 self._check_timeout(job)
             return job
 
-    async def get_all_jobs(self) -> list[Job]:
+    def get_all_jobs(self) -> list[Job]:
         """Get all jobs, oldest first (FIFO order)."""
-        async with self._lock:
+        with self._lock:
             # Check timeouts on all active jobs
             for job in self._jobs.values():
                 self._check_timeout(job)
             return list(self._jobs.values())
 
-    async def pop_next_pending(self) -> Job | None:
+    def pop_next_pending(self) -> Job | None:
         """Get and activate the next pending job (FIFO). Returns None if none."""
-        async with self._lock:
+        with self._lock:
             pending = [
                 j
                 for j in self._jobs.values()
@@ -99,14 +103,13 @@ class JobStore:
             self._active_job_id = oldest.id
             return oldest
 
-    async def cancel_job(self, job_id: str) -> bool:
-        """
-        Cancel a running job.
+    def cancel_job(self, job_id: str) -> bool:
+        """Cancel a running job.
 
         Returns False if job doesn't exist or is already finished.
         Cancellation signaling is handled by CancelToken in JobExecutor.
         """
-        async with self._lock:
+        with self._lock:
             job = self._jobs.get(job_id)
             if not job:
                 return False
@@ -122,7 +125,7 @@ class JobStore:
 
             return True
 
-    async def update_job(
+    def update_job(
         self,
         job_id: str,
         status: JobStatus | None = None,
@@ -132,7 +135,7 @@ class JobStore:
         completed_at: datetime | None = None,
     ) -> Job | None:
         """Update job fields. Caller is responsible for checking job state first."""
-        async with self._lock:
+        with self._lock:
             job = self._jobs.get(job_id)
             if not job:
                 return None
@@ -156,14 +159,14 @@ class JobStore:
 
             return job
 
-    async def add_log(
+    def add_log(
         self,
         job_id: str,
         status: LogStatus,
         message: str,
     ) -> None:
         """Add a log entry for a job. Caller is responsible for checking job state."""
-        async with self._lock:
+        with self._lock:
             if job_id not in self._jobs:
                 return
 
@@ -178,7 +181,7 @@ class JobStore:
             if len(self._logs[job_id]) > self.MAX_LOGS_PER_JOB:
                 self._logs[job_id] = self._logs[job_id][-self.MAX_LOGS_PER_JOB :]
 
-    async def transition_job(
+    def transition_job(
         self,
         job_id: str,
         status: JobStatus,
@@ -192,7 +195,7 @@ class JobStore:
         This is the preferred method for job state transitions as it combines
         update_job() and add_log() into a single atomic operation.
         """
-        async with self._lock:
+        with self._lock:
             job = self._jobs.get(job_id)
             if not job:
                 return None
@@ -225,9 +228,9 @@ class JobStore:
 
             return job
 
-    async def get_all_logs(self) -> list[LogEntry]:
+    def get_all_logs(self) -> list[LogEntry]:
         """Get all logs from all jobs, sorted chronologically."""
-        async with self._lock:
+        with self._lock:
             all_logs: list[LogEntry] = []
             for job_id in self._jobs:
                 if job_id in self._logs:
@@ -236,13 +239,12 @@ class JobStore:
             all_logs.sort(key=lambda x: x.timestamp)
             return all_logs[-self.MAX_TOTAL_LOGS :]
 
-    async def delete_job(self, job_id: str) -> bool:
-        """
-        Delete a job.
+    def delete_job(self, job_id: str) -> bool:
+        """Delete a job.
 
         Returns False if job doesn't exist or is still running.
         """
-        async with self._lock:
+        with self._lock:
             job = self._jobs.get(job_id)
             if not job:
                 return False
@@ -253,13 +255,12 @@ class JobStore:
             self._remove_job_internal(job_id)
             return True
 
-    async def clear_completed(self) -> int:
-        """
-        Clear all completed/failed/cancelled jobs.
+    def clear_completed(self) -> int:
+        """Clear all completed/failed/cancelled jobs.
 
         Returns the number of jobs removed.
         """
-        async with self._lock:
+        with self._lock:
             to_remove = [
                 job_id for job_id, job in self._jobs.items() if job.status.is_finished
             ]
@@ -268,8 +269,7 @@ class JobStore:
             return len(to_remove)
 
     def _check_timeout(self, job: Job) -> bool:
-        """
-        Check if job has timed out. Must be called with lock held.
+        """Check if job has timed out. Must be called with lock held.
 
         Returns True if job was timed out.
         """

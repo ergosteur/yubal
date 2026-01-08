@@ -1,8 +1,5 @@
 """Album sync service for downloading and tagging albums."""
 
-import shutil
-from collections.abc import Iterator
-from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -11,6 +8,7 @@ from yubal.core.models import AlbumInfo, DownloadResult, SyncResult
 from yubal.services.downloader import Downloader
 from yubal.services.sync.cancel import CancelToken
 from yubal.services.sync.progress import ProgressEmitter
+from yubal.services.sync.temp_dir import job_temp_dir
 from yubal.services.tagger import Tagger
 
 # Progress thresholds for album sync
@@ -83,7 +81,7 @@ class AlbumSyncService:
         """
         album_info: AlbumInfo | None = None
 
-        with self._job_temp_dir(job_id) as job_temp_dir:
+        with job_temp_dir(self.temp_dir, job_id) as temp_path:
             try:
                 # Phase 1: Extract album info (0% -> 10%)
                 progress.emit(
@@ -132,7 +130,7 @@ class AlbumSyncService:
 
                 download_result = self.downloader.download_album(
                     url,
-                    job_temp_dir,
+                    temp_path,
                     progress_callback=download_wrapper,
                     cancel_check=cancel.is_cancelled,
                 )
@@ -198,17 +196,6 @@ class AlbumSyncService:
                     album_info=album_info,
                     error=str(e),
                 )
-
-    @contextmanager
-    def _job_temp_dir(self, job_id: str) -> Iterator[Path]:
-        """Context manager for job temporary directory with automatic cleanup."""
-        job_temp_dir = self.temp_dir / job_id
-        job_temp_dir.mkdir(parents=True, exist_ok=True)
-        try:
-            yield job_temp_dir
-        finally:
-            if job_temp_dir.exists():
-                shutil.rmtree(job_temp_dir, ignore_errors=True)
 
     def _handle_download_result(
         self,

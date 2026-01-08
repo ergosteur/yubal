@@ -31,7 +31,7 @@ class DownloadError(YubalError):
     pass
 
 
-class ImportError(YubalError):
+class BeetsImportError(YubalError):
     """Raised when a beets import operation fails."""
 
     pass
