@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
   "click>=8.1.0",
   "ytmusicapi>=1.9.0",
+  "pydantic>=2.0.0",
+  "rich>=13.0.0",
 ]
 
 [project.scripts]

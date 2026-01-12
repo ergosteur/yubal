@@ -20,6 +20,8 @@ For each track:
   - `year`
 - Embedded cover art (1:1 format)
 
+Format: Pydantic model. Pretty print using Rich, summary of the whole process and the results.
+
 ### Process
 
 ```
