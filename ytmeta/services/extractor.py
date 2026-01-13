@@ -225,9 +225,7 @@ class MetadataExtractorService:
 
         for result in results:
             if result.album:
-                atv_id = (
-                    result.video_id if result.video_type == VideoType.ATV else None
-                )
+                atv_id = result.video_id if result.video_type == VideoType.ATV else None
                 return result.album.id, atv_id
 
         return None, None

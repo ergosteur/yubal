@@ -106,7 +106,9 @@ def print_table(
         )
 
     if summary_parts:
-        console.print(f"\nExtracted {len(tracks)} track(s) ({', '.join(summary_parts)})")
+        console.print(
+            f"\nExtracted {len(tracks)} track(s) ({', '.join(summary_parts)})"
+        )
     else:
         console.print(f"\nExtracted {len(tracks)} track(s)")
 

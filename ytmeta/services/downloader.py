@@ -233,7 +233,7 @@ class DownloadService:
                 error=str(e),
             )
 
-        # Skip existing files (use string concat - with_suffix breaks on dots in filename)
+        # Skip existing files (with_suffix breaks on dots in filename)
         expected = Path(f"{output_path}.{self._config.codec.value}")
         if expected.exists():
             logger.debug("Skipping existing file: %s", expected)
