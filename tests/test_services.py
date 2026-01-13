@@ -267,3 +267,569 @@ class TestMetadataExtractorService:
         # Should have captured the ATV ID from search
         assert tracks[0].atv_video_id == "atv456"
         assert tracks[0].video_type == VideoType.OMV
+
+    def test_extract_album_playlist_atv_no_duplicate_ids(
+        self,
+    ) -> None:
+        """Should not duplicate ATV ID as OMV ID for album playlists.
+
+        Album playlists contain ATV tracks where the playlist track video_id
+        and album track video_id are the same. In this case, omv_video_id
+        should be None since there's no separate OMV.
+        """
+        # Album playlist track (ATV) with same video_id as album track
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "atv123",
+                        "videoType": "MUSIC_VIDEO_TYPE_ATV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        # Album track has the same video_id (as is typical for album playlists)
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "atv123",  # Same as playlist track
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 1,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(
+            playlist=playlist,
+            album=album,
+            search_results=[],
+        )
+
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # ATV ID should be set
+        assert tracks[0].atv_video_id == "atv123"
+        # OMV ID should be None (not the same as ATV)
+        assert tracks[0].omv_video_id is None
+        assert tracks[0].video_type == VideoType.ATV
+
+    def test_extract_determines_video_type_omv(
+        self,
+    ) -> None:
+        """Should detect OMV video type when not ATV."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "omv123",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "omv123",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 1,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        assert tracks[0].video_type == VideoType.OMV
+        assert tracks[0].omv_video_id == "omv123"
+        assert tracks[0].atv_video_id is None
+
+    def test_extract_matches_track_by_duration_when_title_differs(
+        self,
+    ) -> None:
+        """Should match track by duration when title doesn't match."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v1",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "Different Title",  # Title doesn't match
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 237,  # Unique duration
+                    }
+                ]
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "album_v1",
+                        "title": "Original Title",  # Different title
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 3,
+                        "duration_seconds": 237,  # Matching duration
+                    },
+                    {
+                        "videoId": "album_v2",
+                        "title": "Another Song",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 4,
+                        "duration_seconds": 300,  # Different duration
+                    },
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should have matched by duration and gotten track number
+        assert tracks[0].tracknumber == 3
+        assert tracks[0].omv_video_id == "album_v1"
+
+    def test_extract_no_duration_match_when_multiple_tracks_same_duration(
+        self,
+    ) -> None:
+        """Should not match by duration when multiple tracks have same duration."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v1",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "Unknown Title",
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "album_v1",
+                        "title": "Song One",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 1,
+                        "duration_seconds": 180,  # Same duration
+                    },
+                    {
+                        "videoId": "album_v2",
+                        "title": "Song Two",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 2,
+                        "duration_seconds": 180,  # Same duration - ambiguous!
+                    },
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should NOT have matched - tracknumber should be None
+        assert tracks[0].tracknumber is None
+        # Falls back to track.video_id since no album_track matched
+        assert tracks[0].omv_video_id == "v1"
+
+    def test_extract_title_matching_case_insensitive(
+        self,
+    ) -> None:
+        """Should match titles case-insensitively."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v1",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "TEST SONG",  # Uppercase
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "album_v1",
+                        "title": "test song",  # Lowercase
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 7,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should have matched despite case difference
+        assert tracks[0].tracknumber == 7
+        assert tracks[0].omv_video_id == "album_v1"
+
+    def test_extract_title_matching_strips_whitespace(
+        self,
+    ) -> None:
+        """Should match titles after stripping whitespace."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v1",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "  Test Song  ",  # Extra whitespace
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "album_v1",
+                        "title": "Test Song",  # No extra whitespace
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 2,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should have matched after stripping whitespace
+        assert tracks[0].tracknumber == 2
+
+    def test_extract_search_returns_omv_result(
+        self,
+    ) -> None:
+        """Should not capture ATV ID when search returns OMV."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "omv123",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        # No album - triggers search
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        # Search returns OMV, not ATV
+        search_result = SearchResult.model_validate(
+            {
+                "videoId": "search_omv",
+                "videoType": "MUSIC_VIDEO_TYPE_OMV",  # OMV result
+                "album": {"id": "alb1", "name": "Album"},
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "album_v1",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 1,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(
+            playlist=playlist, album=album, search_results=[search_result]
+        )
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # ATV should be None since search returned OMV
+        assert tracks[0].atv_video_id is None
+        assert tracks[0].omv_video_id == "album_v1"
+
+    def test_extract_fallback_for_atv_track(
+        self,
+    ) -> None:
+        """Fallback metadata for ATV track should set atv_video_id."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "atv123",
+                        "videoType": "MUSIC_VIDEO_TYPE_ATV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        # No album
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        # No album found anywhere
+        mock = MockYTMusicClient(playlist=playlist, album=None, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should use fallback with ATV ID set correctly
+        assert tracks[0].atv_video_id == "atv123"
+        assert tracks[0].omv_video_id is None
+        assert tracks[0].video_type == VideoType.ATV
+
+    def test_extract_atv_track_with_different_omv_in_album(
+        self,
+    ) -> None:
+        """ATV track should get separate OMV ID from album when different."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "atv123",
+                        "videoType": "MUSIC_VIDEO_TYPE_ATV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        # Album track has a DIFFERENT video ID (the OMV)
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "omv456",  # Different from playlist track!
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 1,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Both IDs should be set and different
+        assert tracks[0].atv_video_id == "atv123"
+        assert tracks[0].omv_video_id == "omv456"
+        assert tracks[0].video_type == VideoType.ATV
+
+    def test_extract_video_type_none_defaults_to_omv(
+        self,
+    ) -> None:
+        """Should default to OMV when video_type is missing."""
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v123",
+                        # No videoType field
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        album = Album.model_validate(
+            {
+                "title": "Album",
+                "artists": [{"name": "Artist"}],
+                "thumbnails": [{"url": "https://t.jpg", "width": 544, "height": 544}],
+                "tracks": [
+                    {
+                        "videoId": "v123",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "trackNumber": 1,
+                        "duration_seconds": 180,
+                    }
+                ],
+            }
+        )
+
+        mock = MockYTMusicClient(playlist=playlist, album=album, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should default to OMV
+        assert tracks[0].video_type == VideoType.OMV
+
+    def test_extract_album_fetch_failure_uses_fallback(
+        self,
+    ) -> None:
+        """Should use fallback when album fetch fails."""
+
+        class FailingAlbumClient(MockYTMusicClient):
+            def get_album(self, album_id: str) -> Album:
+                raise Exception("Album fetch failed")
+
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v123",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        "album": {"id": "alb1", "name": "My Album"},
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        mock = FailingAlbumClient(playlist=playlist, album=None, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should have used fallback (album name from track, not full album)
+        assert tracks[0].album == "My Album"
+        assert tracks[0].tracknumber is None  # No album lookup
+
+    def test_extract_search_failure_continues(
+        self,
+    ) -> None:
+        """Should continue when search fails."""
+
+        class FailingSearchClient(MockYTMusicClient):
+            def search_songs(self, query: str) -> list[SearchResult]:
+                raise Exception("Search failed")
+
+        playlist = Playlist.model_validate(
+            {
+                "tracks": [
+                    {
+                        "videoId": "v123",
+                        "videoType": "MUSIC_VIDEO_TYPE_OMV",
+                        "title": "Test Song",
+                        "artists": [{"name": "Artist"}],
+                        # No album - triggers search
+                        "thumbnails": [
+                            {"url": "https://t.jpg", "width": 120, "height": 90}
+                        ],
+                        "duration_seconds": 180,
+                    }
+                ]
+            }
+        )
+
+        mock = FailingSearchClient(playlist=playlist, album=None, search_results=[])
+        service = MetadataExtractorService(mock)
+        tracks = service.extract("https://music.youtube.com/playlist?list=PLtest")
+
+        # Should have returned fallback metadata
+        assert len(tracks) == 1
+        assert tracks[0].title == "Test Song"
+        assert tracks[0].album == ""  # No album found

@@ -206,12 +206,19 @@ class MetadataExtractorService:
         track_artists = album_track.artists if album_track else track.artists
         track_number = album_track.track_number if album_track else None
 
-        # OMV from album track, ATV from playlist (if ATV) or search
+        # Determine video IDs based on track type
         omv_id = album_track.video_id if album_track else None
         atv_id = track.video_id if video_type == VideoType.ATV else search_atv_id
 
+        # For ATV tracks, only use omv_id if it differs from atv_id
+        # (album playlists contain ATVs, so omv_id == atv_id means no separate OMV)
+        if video_type == VideoType.ATV:
+            final_omv_id = omv_id if omv_id and omv_id != atv_id else None
+        else:
+            final_omv_id = omv_id or track.video_id
+
         return TrackMetadata(
-            omv_video_id=omv_id or track.video_id,
+            omv_video_id=final_omv_id,
             atv_video_id=atv_id,
             title=track_title,
             artist=format_artists(track_artists),
@@ -240,9 +247,17 @@ class MetadataExtractorService:
         if video_type is None:
             video_type = self._determine_video_type(track)
 
+        # Assign video ID based on track type
+        if video_type == VideoType.ATV:
+            omv_id = None
+            atv_id = track.video_id
+        else:
+            omv_id = track.video_id
+            atv_id = None
+
         return TrackMetadata(
-            omv_video_id=track.video_id,
-            atv_video_id=None,
+            omv_video_id=omv_id,
+            atv_video_id=atv_id,
             title=track.title,
             artist=format_artists(track.artists),
             album=track.album.name if track.album else "",

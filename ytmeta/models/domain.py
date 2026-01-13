@@ -21,7 +21,7 @@ class TrackMetadata(BaseModel):
     This is the primary output model of the library.
     """
 
-    omv_video_id: str  # Canonical ID (OMV from album)
+    omv_video_id: str | None = None  # OMV video ID if available
     atv_video_id: str | None = None  # ATV video ID if available
     title: str
     artist: str  # "Artist One; Artist Two"

@@ -166,10 +166,14 @@ class DownloadService:
 
         Returns:
             Video ID to download.
+
+        Raises:
+            DownloadError: If no video ID is available.
         """
-        if track.atv_video_id:
-            return track.atv_video_id
-        return track.omv_video_id
+        video_id = track.atv_video_id or track.omv_video_id
+        if not video_id:
+            raise DownloadError(f"No video ID available for track: {track.title}")
+        return video_id
 
     def _build_output_path(self, track: TrackMetadata) -> Path:
         """Build output path for a track.
