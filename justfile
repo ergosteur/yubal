@@ -2,7 +2,7 @@ default:
     @just --list
 
 # Run the CLI
-run *args:
+cli *args:
     uv run ytmeta {{ args }}
 
 # Install dependencies

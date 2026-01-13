@@ -216,20 +216,8 @@ def download_cmd(
                 if playlist_info is None:
                     playlist_info = extract_progress.playlist_info
 
-        console.print(f"[green]Found {len(tracks)} tracks[/green]\n")
-
-        # Show track summary
-        table = Table(show_header=True, header_style="bold")
-        table.add_column("#", justify="right", width=4)
-        table.add_column("Artist")
-        table.add_column("Title")
-        table.add_column("Source", width=6)
-
-        for i, track in enumerate(tracks, 1):
-            source = "ATV" if track.atv_video_id else "OMV"
-            table.add_row(str(i), track.artist, track.title, source)
-
-        console.print(table)
+        console.print()
+        print_table(tracks)
         console.print()
 
         # Step 2: Download tracks
