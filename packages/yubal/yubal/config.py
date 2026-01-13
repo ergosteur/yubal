@@ -1,4 +1,4 @@
-"""Configuration for ytmeta."""
+"""Configuration for yubal."""
 
 from dataclasses import dataclass
 from enum import StrEnum

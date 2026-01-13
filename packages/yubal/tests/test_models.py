@@ -3,8 +3,8 @@
 import pytest
 from pydantic import ValidationError
 
-from ytmeta.models.domain import TrackMetadata, VideoType
-from ytmeta.models.ytmusic import (
+from yubal.models.domain import TrackMetadata, VideoType
+from yubal.models.ytmusic import (
     Album,
     AlbumRef,
     AlbumTrack,

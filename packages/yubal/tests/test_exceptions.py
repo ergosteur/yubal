@@ -1,6 +1,6 @@
 """Tests for exceptions."""
 
-from ytmeta.exceptions import (
+from yubal.exceptions import (
     APIError,
     PlaylistNotFoundError,
     PlaylistParseError,

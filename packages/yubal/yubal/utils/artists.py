@@ -1,6 +1,6 @@
 """Artist formatting utilities."""
 
-from ytmeta.models.ytmusic import Artist
+from yubal.models.ytmusic import Artist
 
 
 def format_artists(artists: list[Artist]) -> str:

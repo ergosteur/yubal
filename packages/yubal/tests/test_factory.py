@@ -1,6 +1,6 @@
 """Tests for factory functions and public API."""
 
-from ytmeta import (
+from yubal import (
     APIConfig,
     MetadataExtractorService,
     create_extractor,
@@ -29,34 +29,34 @@ class TestPublicAPI:
 
     def test_all_expected_exports_available(self) -> None:
         """All documented exports should be available."""
-        import ytmeta
+        import yubal
 
         # Factory function
-        assert hasattr(ytmeta, "create_extractor")
+        assert hasattr(yubal, "create_extractor")
 
         # Client
-        assert hasattr(ytmeta, "YTMusicClient")
-        assert hasattr(ytmeta, "YTMusicProtocol")
+        assert hasattr(yubal, "YTMusicClient")
+        assert hasattr(yubal, "YTMusicProtocol")
 
         # Services
-        assert hasattr(ytmeta, "MetadataExtractorService")
+        assert hasattr(yubal, "MetadataExtractorService")
 
         # Models
-        assert hasattr(ytmeta, "TrackMetadata")
-        assert hasattr(ytmeta, "VideoType")
+        assert hasattr(yubal, "TrackMetadata")
+        assert hasattr(yubal, "VideoType")
 
         # Config
-        assert hasattr(ytmeta, "APIConfig")
+        assert hasattr(yubal, "APIConfig")
 
         # Exceptions
-        assert hasattr(ytmeta, "YTMetaError")
-        assert hasattr(ytmeta, "PlaylistParseError")
-        assert hasattr(ytmeta, "PlaylistNotFoundError")
-        assert hasattr(ytmeta, "APIError")
+        assert hasattr(yubal, "YTMetaError")
+        assert hasattr(yubal, "PlaylistParseError")
+        assert hasattr(yubal, "PlaylistNotFoundError")
+        assert hasattr(yubal, "APIError")
 
     def test_version_available(self) -> None:
         """Version should be available."""
-        import ytmeta
+        import yubal
 
-        assert hasattr(ytmeta, "__version__")
-        assert ytmeta.__version__ == "0.1.0"
+        assert hasattr(yubal, "__version__")
+        assert yubal.__version__ == "0.1.0"

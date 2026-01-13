@@ -2,9 +2,9 @@
 
 import pytest
 
-from ytmeta.exceptions import PlaylistParseError
-from ytmeta.models.ytmusic import Artist, Thumbnail
-from ytmeta.utils import format_artists, get_square_thumbnail, parse_playlist_id
+from yubal.exceptions import PlaylistParseError
+from yubal.models.ytmusic import Artist, Thumbnail
+from yubal.utils import format_artists, get_square_thumbnail, parse_playlist_id
 
 
 class TestParsePlaylistId:

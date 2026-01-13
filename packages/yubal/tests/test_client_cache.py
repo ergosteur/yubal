@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ytmeta.client import YTMusicClient
+from yubal.client import YTMusicClient
 
 
 @pytest.fixture

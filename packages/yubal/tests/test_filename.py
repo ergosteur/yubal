@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from ytmeta.utils.filename import build_track_path, clean_filename
+from yubal.utils.filename import build_track_path, clean_filename
 
 
 class TestCleanFilename:

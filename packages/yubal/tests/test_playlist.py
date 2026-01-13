@@ -1,6 +1,6 @@
 """Tests for playlist utilities."""
 
-from ytmeta.utils.playlist import is_album_playlist
+from yubal.utils.playlist import is_album_playlist
 
 
 class TestIsAlbumPlaylist:

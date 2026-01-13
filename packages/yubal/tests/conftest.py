@@ -2,7 +2,7 @@
 
 import pytest
 
-from ytmeta.models.ytmusic import (
+from yubal.models.ytmusic import (
     Album,
     AlbumRef,
     AlbumTrack,

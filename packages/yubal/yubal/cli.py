@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Command-line interface for ytmeta.
+"""Command-line interface for yubal.
 
 This CLI is primarily for debugging and development.
-For production use, import ytmeta as a library.
+For production use, import yubal as a library.
 """
 
 import json
@@ -23,19 +23,19 @@ from rich.progress import (
 )
 from rich.table import Table
 
-from ytmeta.client import YTMusicClient
-from ytmeta.config import DownloadConfig
-from ytmeta.exceptions import YTMetaError
-from ytmeta.models.domain import TrackMetadata
-from ytmeta.services import (
+from yubal.client import YTMusicClient
+from yubal.config import DownloadConfig
+from yubal.exceptions import YTMetaError
+from yubal.models.domain import TrackMetadata
+from yubal.services import (
     DownloadService,
     DownloadStatus,
     MetadataExtractorService,
     PlaylistInfo,
 )
-from ytmeta.utils import is_album_playlist, write_m3u
+from yubal.utils import is_album_playlist, write_m3u
 
-logger = logging.getLogger("ytmeta")
+logger = logging.getLogger("yubal")
 
 
 def setup_logging() -> None:
@@ -202,9 +202,9 @@ def download_cmd(
 
     Examples:
 
-        ytmeta download "https://music.youtube.com/playlist?list=PLxxx"
+        yubal download "https://music.youtube.com/playlist?list=PLxxx"
 
-        ytmeta download "https://music.youtube.com/playlist?list=PLxxx" -o ~/Music
+        yubal download "https://music.youtube.com/playlist?list=PLxxx" -o ~/Music
     """
     console = Console()
 
@@ -250,7 +250,7 @@ def download_cmd(
         # Step 2: Download tracks
         console.print(f"[bold]Downloading to {output}...[/bold]\n")
 
-        from ytmeta.config import AudioCodec
+        from yubal.config import AudioCodec
 
         config = DownloadConfig(
             base_path=output,

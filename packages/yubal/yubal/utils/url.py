@@ -2,7 +2,7 @@
 
 import re
 
-from ytmeta.exceptions import PlaylistParseError
+from yubal.exceptions import PlaylistParseError
 
 PLAYLIST_ID_PATTERN = re.compile(r"list=([A-Za-z0-9_-]+)")
 

@@ -6,9 +6,9 @@ import pytest
 from pydantic import ValidationError
 
 from tests.conftest import MockYTMusicClient
-from ytmeta.models.domain import VideoType
-from ytmeta.models.ytmusic import Album, Playlist, SearchResult
-from ytmeta.services import MetadataExtractorService
+from yubal.models.domain import VideoType
+from yubal.models.ytmusic import Album, Playlist, SearchResult
+from yubal.services import MetadataExtractorService
 
 
 class TestMetadataExtractorService:

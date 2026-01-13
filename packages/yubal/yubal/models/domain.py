@@ -1,4 +1,4 @@
-"""Domain models for ytmeta.
+"""Domain models for yubal.
 
 These are the public models that represent the output of the library.
 """

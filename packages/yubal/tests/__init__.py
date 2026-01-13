@@ -1,1 +1,1 @@
-"""Tests for ytmeta."""
+"""Tests for yubal."""

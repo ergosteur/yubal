@@ -1,4 +1,4 @@
-"""Data models for ytmeta.
+"""Data models for yubal.
 
 Public models (domain.py):
     TrackMetadata - Primary output model
@@ -10,10 +10,10 @@ Internal models (ytmusic.py):
 """
 
 # Public domain models
-from ytmeta.models.domain import TrackMetadata, VideoType
+from yubal.models.domain import TrackMetadata, VideoType
 
 # Internal ytmusicapi response models
-from ytmeta.models.ytmusic import (
+from yubal.models.ytmusic import (
     Album,
     AlbumRef,
     AlbumTrack,

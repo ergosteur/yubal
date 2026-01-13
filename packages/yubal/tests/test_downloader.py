@@ -7,10 +7,10 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from ytmeta.config import AudioCodec, DownloadConfig
-from ytmeta.exceptions import DownloadError
-from ytmeta.models.domain import TrackMetadata, VideoType
-from ytmeta.services.downloader import (
+from yubal.config import AudioCodec, DownloadConfig
+from yubal.exceptions import DownloadError
+from yubal.models.domain import TrackMetadata, VideoType
+from yubal.services.downloader import (
     DownloadResult,
     DownloadService,
     DownloadStatus,
@@ -302,7 +302,7 @@ class TestDownloadService:
         service = DownloadService(download_config, mock_downloader)
 
         with patch(
-            "ytmeta.services.downloader.tag_track",
+            "yubal.services.downloader.tag_track",
             side_effect=Exception("Tagging failed"),
         ):
             result = service.download_track(sample_track)
@@ -323,7 +323,7 @@ class TestDownloadService:
         # First download
         service.download_track(sample_track)
 
-        with patch("ytmeta.services.downloader.tag_track") as mock_tag:
+        with patch("yubal.services.downloader.tag_track") as mock_tag:
             # Second call should skip - no tagging
             result = service.download_track(sample_track)
 
@@ -339,9 +339,9 @@ class TestDownloadService:
         mock_downloader = MockDownloader()
         service = DownloadService(download_config, mock_downloader)
 
-        with patch("ytmeta.services.downloader.tag_track") as mock_tag:
+        with patch("yubal.services.downloader.tag_track") as mock_tag:
             with patch(
-                "ytmeta.services.downloader.fetch_cover", return_value=b"cover data"
+                "yubal.services.downloader.fetch_cover", return_value=b"cover data"
             ):
                 result = service.download_track(sample_track)
 

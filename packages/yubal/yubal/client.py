@@ -5,9 +5,9 @@ from typing import Protocol
 
 from ytmusicapi import YTMusic
 
-from ytmeta.config import APIConfig
-from ytmeta.exceptions import APIError, PlaylistNotFoundError
-from ytmeta.models.ytmusic import Album, Playlist, SearchResult
+from yubal.config import APIConfig
+from yubal.exceptions import APIError, PlaylistNotFoundError
+from yubal.models.ytmusic import Album, Playlist, SearchResult
 
 logger = logging.getLogger(__name__)
 

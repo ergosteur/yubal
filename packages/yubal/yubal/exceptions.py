@@ -1,4 +1,4 @@
-"""Custom exceptions for ytmeta.
+"""Custom exceptions for yubal.
 
 All exceptions include an HTTP status_code attribute for easy
 integration with web frameworks like FastAPI.
@@ -6,7 +6,7 @@ integration with web frameworks like FastAPI.
 
 
 class YTMetaError(Exception):
-    """Base exception for ytmeta.
+    """Base exception for yubal.
 
     Attributes:
         status_code: HTTP status code for API error responses.

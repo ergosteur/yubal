@@ -3,7 +3,7 @@ default:
 
 # Run the CLI
 cli *args:
-    uv run ytmeta {{ args }}
+    uv run yubal {{ args }}
 
 # Install dependencies
 install:
@@ -11,27 +11,27 @@ install:
 
 # Format code
 format:
-    uv run ruff format ytmeta
+    uv run ruff format yubal
 
 # Check formatting
 format-check:
-    uv run ruff format --check ytmeta
+    uv run ruff format --check yubal
 
 # Lint code
 lint:
-    uv run ruff check ytmeta
+    uv run ruff check yubal
 
 # Lint and fix
 lint-fix:
-    uv run ruff check --fix ytmeta
+    uv run ruff check --fix yubal
 
 # Type check
 typecheck:
-    uv run ty check ytmeta
+    uv run ty check yubal
 
 # Run tests with coverage
 test *args:
-    uv run pytest --cov=ytmeta --cov-report=term-missing {{ args }}
+    uv run pytest --cov=yubal --cov-report=term-missing {{ args }}
 
 # Run all checks
 check: format-check lint typecheck test

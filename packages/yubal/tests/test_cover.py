@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from ytmeta.utils.cover import clear_cover_cache, fetch_cover, get_cover_cache_size
+from yubal.utils.cover import clear_cover_cache, fetch_cover, get_cover_cache_size
 
 
 @pytest.fixture(autouse=True)
@@ -34,7 +34,7 @@ class TestFetchCover:
         mock_response.__exit__ = MagicMock(return_value=False)
 
         with patch(
-            "ytmeta.utils.cover.urllib.request.urlopen", return_value=mock_response
+            "yubal.utils.cover.urllib.request.urlopen", return_value=mock_response
         ):
             result = fetch_cover("https://example.com/cover.jpg")
 
@@ -48,7 +48,7 @@ class TestFetchCover:
         mock_response.__exit__ = MagicMock(return_value=False)
 
         with patch(
-            "ytmeta.utils.cover.urllib.request.urlopen", return_value=mock_response
+            "yubal.utils.cover.urllib.request.urlopen", return_value=mock_response
         ) as mock_urlopen:
             # First call - fetches
             result1 = fetch_cover("https://example.com/cover.jpg")
@@ -72,7 +72,7 @@ class TestFetchCover:
         mock_response2.__enter__ = MagicMock(return_value=mock_response2)
         mock_response2.__exit__ = MagicMock(return_value=False)
 
-        with patch("ytmeta.utils.cover.urllib.request.urlopen") as mock_urlopen:
+        with patch("yubal.utils.cover.urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = [mock_response1, mock_response2]
             result1 = fetch_cover("https://example.com/cover1.jpg")
             result2 = fetch_cover("https://example.com/cover2.jpg")
@@ -85,7 +85,7 @@ class TestFetchCover:
         """Should return None on HTTP error."""
         from urllib.error import HTTPError
 
-        with patch("ytmeta.utils.cover.urllib.request.urlopen") as mock_urlopen:
+        with patch("yubal.utils.cover.urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = HTTPError(
                 "https://example.com/cover.jpg", 404, "Not Found", {}, None
             )
@@ -97,7 +97,7 @@ class TestFetchCover:
         """Should return None on URL error."""
         from urllib.error import URLError
 
-        with patch("ytmeta.utils.cover.urllib.request.urlopen") as mock_urlopen:
+        with patch("yubal.utils.cover.urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = URLError("Connection refused")
             result = fetch_cover("https://example.com/cover.jpg")
 
@@ -105,7 +105,7 @@ class TestFetchCover:
 
     def test_handles_timeout(self) -> None:
         """Should return None on timeout."""
-        with patch("ytmeta.utils.cover.urllib.request.urlopen") as mock_urlopen:
+        with patch("yubal.utils.cover.urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = TimeoutError("Connection timed out")
             result = fetch_cover("https://example.com/cover.jpg")
 
@@ -123,7 +123,7 @@ class TestClearCoverCache:
         mock_response.__exit__ = MagicMock(return_value=False)
 
         with patch(
-            "ytmeta.utils.cover.urllib.request.urlopen", return_value=mock_response
+            "yubal.utils.cover.urllib.request.urlopen", return_value=mock_response
         ):
             fetch_cover("https://example.com/cover.jpg")
             assert get_cover_cache_size() == 1
@@ -147,7 +147,7 @@ class TestGetCoverCacheSize:
         mock_response.__exit__ = MagicMock(return_value=False)
 
         with patch(
-            "ytmeta.utils.cover.urllib.request.urlopen", return_value=mock_response
+            "yubal.utils.cover.urllib.request.urlopen", return_value=mock_response
         ):
             fetch_cover("https://example.com/cover1.jpg")
             assert get_cover_cache_size() == 1

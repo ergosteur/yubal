@@ -7,8 +7,8 @@ supported by most media players.
 import os
 from pathlib import Path
 
-from ytmeta.models.domain import TrackMetadata
-from ytmeta.utils.filename import clean_filename
+from yubal.models.domain import TrackMetadata
+from yubal.utils.filename import clean_filename
 
 
 def generate_m3u(tracks: list[tuple[TrackMetadata, Path]], m3u_path: Path) -> str:

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 _cover_cache: dict[str, bytes] = {}
 
 # Get version from package metadata for User-Agent
-_VERSION = version("ytmeta")
+_VERSION = version("yubal")
 
 
 def fetch_cover(url: str | None, timeout: float = 30.0) -> bytes | None:
@@ -35,7 +35,7 @@ def fetch_cover(url: str | None, timeout: float = 30.0) -> bytes | None:
     try:
         request = urllib.request.Request(
             url,
-            headers={"User-Agent": f"ytmeta/{_VERSION}"},
+            headers={"User-Agent": f"yubal/{_VERSION}"},
         )
         with urllib.request.urlopen(request, timeout=timeout) as response:
             data = response.read()

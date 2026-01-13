@@ -585,7 +585,19 @@ wheels = [
 ]
 
 [[package]]
-name = "ytmeta"
+name = "ytmusicapi"
+version = "1.11.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/00/47/b14db25c117d1dfcfe8e521e3e68cb021513078fc7bd0d95c5491b9b929c/ytmusicapi-1.11.4.tar.gz", hash = "sha256:ea0972d4dcaf8225ab95b6665b7c2a63d6a48d8828cf7d0ad6c76d12207ae86e", size = 412987, upload-time = "2025-12-19T16:51:48.697Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/30/1e/1e462a98c99923757166b7dd703b04b53bb6d7787d2dbdd69e46fda6899d/ytmusicapi-1.11.4-py3-none-any.whl", hash = "sha256:5c2c0ecce6a8c2350688922f014b220459a73568e06a0cff90416070a3268fd9", size = 102163, upload-time = "2025-12-19T16:51:47.065Z" },
+]
+
+[[package]]
+name = "yubal"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
@@ -627,16 +639,4 @@ dev = [
     { name = "pytest-cov", specifier = ">=4.0.0" },
     { name = "ruff", specifier = ">=0.14.11" },
     { name = "ty", specifier = ">=0.0.11" },
-]
-
-[[package]]
-name = "ytmusicapi"
-version = "1.11.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/00/47/b14db25c117d1dfcfe8e521e3e68cb021513078fc7bd0d95c5491b9b929c/ytmusicapi-1.11.4.tar.gz", hash = "sha256:ea0972d4dcaf8225ab95b6665b7c2a63d6a48d8828cf7d0ad6c76d12207ae86e", size = 412987, upload-time = "2025-12-19T16:51:48.697Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/1e/1e462a98c99923757166b7dd703b04b53bb6d7787d2dbdd69e46fda6899d/ytmusicapi-1.11.4-py3-none-any.whl", hash = "sha256:5c2c0ecce6a8c2350688922f014b220459a73568e06a0cff90416070a3268fd9", size = 102163, upload-time = "2025-12-19T16:51:47.065Z" },
 ]

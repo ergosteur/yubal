@@ -9,17 +9,17 @@ from typing import Any, Protocol
 
 import yt_dlp
 
-from ytmeta.config import DownloadConfig
-from ytmeta.exceptions import DownloadError
-from ytmeta.models.domain import (
+from yubal.config import DownloadConfig
+from yubal.exceptions import DownloadError
+from yubal.models.domain import (
     DownloadProgress,
     DownloadResult,
     DownloadStatus,
     TrackMetadata,
 )
-from ytmeta.services.tagger import tag_track
-from ytmeta.utils.cover import fetch_cover
-from ytmeta.utils.filename import build_track_path
+from yubal.services.tagger import tag_track
+from yubal.utils.cover import fetch_cover
+from yubal.utils.filename import build_track_path
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class DownloadService:
     4. Report progress and results
 
     Example:
-        >>> from ytmeta.config import DownloadConfig
+        >>> from yubal.config import DownloadConfig
         >>> config = DownloadConfig(base_path=Path("./music"))
         >>> service = DownloadService(config)
         >>> result = service.download_track(track_metadata)

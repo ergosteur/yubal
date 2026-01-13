@@ -1,6 +1,6 @@
 """Thumbnail selection utilities."""
 
-from ytmeta.models.ytmusic import Thumbnail
+from yubal.models.ytmusic import Thumbnail
 
 
 def get_square_thumbnail(thumbnails: list[Thumbnail]) -> str | None:

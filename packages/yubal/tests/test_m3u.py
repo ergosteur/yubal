@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from ytmeta.models.domain import TrackMetadata, VideoType
-from ytmeta.utils.m3u import generate_m3u, write_m3u
+from yubal.models.domain import TrackMetadata, VideoType
+from yubal.utils.m3u import generate_m3u, write_m3u
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-"""ytmeta - Extract metadata from YouTube Music playlists.
+"""yubal - Extract metadata from YouTube Music playlists.
 
 This library provides tools for extracting structured metadata from
 YouTube Music playlists, including track information, album details,
@@ -8,30 +8,30 @@ Designed for use as a library in applications (e.g., FastAPI) with
 a CLI for debugging and development.
 
 Example:
-    >>> from ytmeta import create_extractor
+    >>> from yubal import create_extractor
     >>> extractor = create_extractor()
     >>> tracks = extractor.extract("https://music.youtube.com/playlist?list=...")
     >>> for track in tracks:
     ...     print(f"{track.artist} - {track.title}")
 
 For downloading tracks:
-    >>> from ytmeta import DownloadService, DownloadConfig
+    >>> from yubal import DownloadService, DownloadConfig
     >>> config = DownloadConfig(base_path=Path("./music"))
     >>> downloader = DownloadService(config)
     >>> results = downloader.download_tracks(tracks)
 """
 
-from ytmeta.client import YTMusicClient, YTMusicProtocol
-from ytmeta.config import APIConfig, AudioCodec, DownloadConfig
-from ytmeta.exceptions import (
+from yubal.client import YTMusicClient, YTMusicProtocol
+from yubal.config import APIConfig, AudioCodec, DownloadConfig
+from yubal.exceptions import (
     APIError,
     DownloadError,
     PlaylistNotFoundError,
     PlaylistParseError,
     YTMetaError,
 )
-from ytmeta.models.domain import ExtractProgress, TrackMetadata, VideoType
-from ytmeta.services import (
+from yubal.models.domain import ExtractProgress, TrackMetadata, VideoType
+from yubal.services import (
     DownloaderProtocol,
     DownloadProgress,
     DownloadResult,
@@ -41,7 +41,7 @@ from ytmeta.services import (
     YTDLPDownloader,
     tag_track,
 )
-from ytmeta.utils import clear_cover_cache, fetch_cover
+from yubal.utils import clear_cover_cache, fetch_cover
 
 __version__ = "0.1.0"
 
