@@ -182,8 +182,7 @@ export function Header() {
             href="https://github.com/guillevc/yubal"
             target="_blank"
             rel="noopener noreferrer"
-            radius="full"
-            variant="ghost"
+            variant="light"
             startContent={
               <Star
                 className="h-4 w-4 fill-amber-400 text-amber-400 dark:fill-amber-300 dark:text-amber-300"

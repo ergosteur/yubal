@@ -18,6 +18,7 @@ export default heroui({
           800: "#87D3C3",
           900: "#DDF1E4",
           DEFAULT: "#3AA99F",
+          foreground: "#000000",
         },
 
         // Secondary (purple)

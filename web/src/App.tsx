@@ -48,7 +48,7 @@ export default function App() {
             >
               <Button
                 color="primary"
-                radius="full"
+                radius="lg"
                 variant={canSync ? "shadow" : "solid"}
                 onPress={handleSync}
                 isDisabled={!canSync}
