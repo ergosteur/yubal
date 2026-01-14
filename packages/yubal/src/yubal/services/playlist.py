@@ -6,7 +6,9 @@ from pathlib import Path
 
 from yubal.client import YTMusicClient, YTMusicProtocol
 from yubal.config import PlaylistDownloadConfig
+from yubal.exceptions import CancellationError
 from yubal.models.domain import (
+    CancelToken,
     DownloadResult,
     PlaylistDownloadResult,
     PlaylistInfo,
@@ -84,7 +86,11 @@ class PlaylistDownloadService:
         # Store last result for retrieval after iteration
         self._last_result: PlaylistDownloadResult | None = None
 
-    def download_playlist(self, url: str) -> Iterator[PlaylistProgress]:
+    def download_playlist(
+        self,
+        url: str,
+        cancel_token: CancelToken | None = None,
+    ) -> Iterator[PlaylistProgress]:
         """Download a complete playlist with artifacts.
 
         Yields progress updates through all phases:
@@ -94,9 +100,13 @@ class PlaylistDownloadService:
 
         Args:
             url: YouTube Music playlist URL.
+            cancel_token: Optional token for cancellation support.
 
         Yields:
             PlaylistProgress with phase and progress information.
+
+        Raises:
+            CancellationError: If cancel_token.is_cancelled becomes True.
 
         Example:
             >>> for progress in service.download_playlist(url):
@@ -108,6 +118,10 @@ class PlaylistDownloadService:
         """
         tracks: list[TrackMetadata] = []
         playlist_info: PlaylistInfo | None = None
+
+        # Check for cancellation before starting
+        if cancel_token and cancel_token.is_cancelled:
+            raise CancellationError("Operation cancelled")
 
         # Phase 1: Extract metadata
         logger.info("Phase 1: Extracting metadata from %s", url)
@@ -128,10 +142,14 @@ class PlaylistDownloadService:
 
         logger.info("Extracted %d tracks from playlist", len(tracks))
 
+        # Check for cancellation before downloading
+        if cancel_token and cancel_token.is_cancelled:
+            raise CancellationError("Operation cancelled")
+
         # Phase 2: Download tracks
         logger.info("Phase 2: Downloading %d tracks", len(tracks))
         results: list[DownloadResult] = []
-        for progress in self._downloader.download_tracks(tracks):
+        for progress in self._downloader.download_tracks(tracks, cancel_token):
             results.append(progress.result)
             yield PlaylistProgress(
                 phase="downloading",
@@ -146,6 +164,10 @@ class PlaylistDownloadService:
             sum(1 for r in results if r.status.value == "skipped"),
             sum(1 for r in results if r.status.value == "failed"),
         )
+
+        # Check for cancellation before composing
+        if cancel_token and cancel_token.is_cancelled:
+            raise CancellationError("Operation cancelled")
 
         # Phase 3: Compose playlist artifacts
         logger.info("Phase 3: Generating playlist files")
@@ -182,7 +204,11 @@ class PlaylistDownloadService:
 
         logger.info("Playlist download complete")
 
-    def download_playlist_all(self, url: str) -> PlaylistDownloadResult:
+    def download_playlist_all(
+        self,
+        url: str,
+        cancel_token: CancelToken | None = None,
+    ) -> PlaylistDownloadResult:
         """Download a playlist and return the complete result.
 
         Convenience method that consumes the iterator and returns the result.
@@ -190,12 +216,14 @@ class PlaylistDownloadService:
 
         Args:
             url: YouTube Music playlist URL.
+            cancel_token: Optional token for cancellation support.
 
         Returns:
             Complete playlist download result.
 
         Raises:
             ValueError: If the download yields no result (empty playlist).
+            CancellationError: If cancel_token.is_cancelled becomes True.
 
         Example:
             >>> result = service.download_playlist_all(url)
@@ -203,7 +231,7 @@ class PlaylistDownloadService:
             >>> print(f"M3U saved to: {result.m3u_path}")
         """
         # Consume iterator
-        for _ in self.download_playlist(url):
+        for _ in self.download_playlist(url, cancel_token):
             pass
 
         if self._last_result is None:

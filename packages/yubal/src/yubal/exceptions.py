@@ -72,3 +72,13 @@ class DownloadError(YTMetaError):
     """
 
     status_code: int = 500  # Internal Server Error
+
+
+class CancellationError(YTMetaError):
+    """Operation was cancelled.
+
+    Raised when a download or extraction operation is cancelled
+    via a CancelToken.
+    """
+
+    status_code: int = 499  # Client Closed Request (nginx convention)

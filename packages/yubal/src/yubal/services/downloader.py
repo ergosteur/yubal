@@ -10,8 +10,9 @@ from typing import Any, Protocol
 import yt_dlp
 
 from yubal.config import DownloadConfig
-from yubal.exceptions import DownloadError
+from yubal.exceptions import CancellationError, DownloadError
 from yubal.models.domain import (
+    CancelToken,
     DownloadProgress,
     DownloadResult,
     DownloadStatus,
@@ -283,17 +284,21 @@ class DownloadService:
     def download_tracks(
         self,
         tracks: list[TrackMetadata],
+        cancel_token: CancelToken | None = None,
     ) -> Iterator[DownloadProgress]:
         """Download multiple tracks.
 
-        Yields progress updates as each track is downloaded. Use download_tracks_all()
-        for a simpler interface that returns all results at once.
+        Yields progress updates as each track is downloaded.
 
         Args:
             tracks: List of track metadata to download.
+            cancel_token: Optional token for cancellation support.
 
         Yields:
             DownloadProgress with current/total counts and the download result.
+
+        Raises:
+            CancellationError: If cancel_token.is_cancelled becomes True.
 
         Example:
             >>> for progress in downloader.download_tracks(tracks):
@@ -302,6 +307,10 @@ class DownloadService:
         total = len(tracks)
 
         for i, track in enumerate(tracks):
+            # Check for cancellation before each download
+            if cancel_token and cancel_token.is_cancelled:
+                raise CancellationError("Download cancelled")
+
             logger.info(
                 "Downloading [%d/%d]: %s - %s",
                 i + 1,
@@ -312,37 +321,3 @@ class DownloadService:
 
             result = self.download_track(track)
             yield DownloadProgress(current=i + 1, total=total, result=result)
-
-        # Log summary (need to iterate to count, but we've already yielded)
-        # Summary logging is now the caller's responsibility
-
-    def download_tracks_all(
-        self,
-        tracks: list[TrackMetadata],
-    ) -> list[DownloadResult]:
-        """Download multiple tracks and return all results.
-
-        Convenience method that collects all results from download_tracks().
-
-        Args:
-            tracks: List of track metadata to download.
-
-        Returns:
-            List of DownloadResults.
-        """
-        results = [
-            p.result for p in self.download_tracks(tracks) if p.result is not None
-        ]
-
-        # Log summary
-        success = sum(1 for r in results if r.status == DownloadStatus.SUCCESS)
-        skipped = sum(1 for r in results if r.status == DownloadStatus.SKIPPED)
-        failed = sum(1 for r in results if r.status == DownloadStatus.FAILED)
-        logger.info(
-            "Download complete: %d success, %d skipped, %d failed",
-            success,
-            skipped,
-            failed,
-        )
-
-        return results

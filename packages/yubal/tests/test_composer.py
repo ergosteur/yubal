@@ -187,7 +187,7 @@ class TestPlaylistComposerService:
         mock_m3u.return_value = tmp_path / "Playlists" / "Test Album.m3u"
         mock_cover.return_value = tmp_path / "Playlists" / "Test Album.jpg"
 
-        m3u_path, cover_path = composer.compose(
+        m3u_path, _ = composer.compose(
             tmp_path, album_playlist_info, download_results, skip_album_m3u=False
         )
 

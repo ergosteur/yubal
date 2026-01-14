@@ -8,21 +8,28 @@ from typing import Any
 
 from yubal import (
     AudioCodec,
+    CancellationError,
     DownloadConfig,
-    DownloadResult,
     DownloadStatus,
+    PlaylistDownloadConfig,
+    PlaylistProgress,
     TrackMetadata,
-    create_downloader,
-    create_extractor,
+    create_playlist_downloader,
 )
 from yubal.models.domain import PlaylistInfo
-from yubal.utils import is_album_playlist, write_m3u
 
 from yubal_api.core.enums import ProgressStep
 from yubal_api.core.models import AlbumInfo
 from yubal_api.services.sync.cancel import CancelToken
 
 logger = logging.getLogger(__name__)
+
+# Phase mapping from yubal to API (fail-fast)
+_PHASE_MAP = {
+    "extracting": ProgressStep.FETCHING_INFO,
+    "downloading": ProgressStep.DOWNLOADING,
+    "composing": ProgressStep.IMPORTING,
+}
 
 
 @dataclass
@@ -33,6 +40,13 @@ class SyncResult:
     album_info: AlbumInfo | None = None
     destination: str | None = None
     error: str | None = None
+
+
+def _map_phase(phase: str) -> ProgressStep:
+    """Map yubal phase to API ProgressStep (fail-fast)."""
+    if phase not in _PHASE_MAP:
+        raise ValueError(f"Unknown phase: {phase}")
+    return _PHASE_MAP[phase]
 
 
 def album_info_from_yubal(
@@ -66,7 +80,7 @@ def album_info_from_yubal(
 class SyncService:
     """Unified sync service wrapping yubal library.
 
-    Orchestrates extraction, download, and M3U generation.
+    Thin adapter over yubal's PlaylistDownloadService.
     Provides progress callbacks compatible with the job system.
     """
 
@@ -102,7 +116,7 @@ class SyncService:
         Progress phases:
         - 0-10%: Extracting metadata
         - 10-90%: Downloading tracks
-        - 90-100%: Finalization (M3U for playlists)
+        - 90-100%: Finalization (M3U and cover)
 
         Args:
             url: YouTube Music album/playlist URL.
@@ -127,111 +141,100 @@ class SyncService:
         playlist_info: PlaylistInfo | None = None
 
         try:
-            # Phase 1: Extract metadata (0% -> 10%)
-            emit(ProgressStep.FETCHING_INFO, "Extracting metadata...", 0.0)
-
-            if self._cookies_path and self._cookies_path.exists():
-                logger.info("Using authenticated extractor with cookies")
-            extractor = create_extractor(cookies_path=self._cookies_path)
-
-            for progress in extractor.extract(url):
-                if cancel_token.is_cancelled():
-                    return SyncResult(success=False, error="Cancelled")
-
-                tracks.append(progress.track)
-                playlist_info = progress.playlist_info
-
-                # Scale to 0-10%
-                pct = (progress.current / progress.total) * 10.0
-                cur, tot = progress.current, progress.total
-                msg = f"Extracted {cur}/{tot}: {progress.track.title}"
-                emit(ProgressStep.FETCHING_INFO, msg, pct)
-
-            if not tracks or not playlist_info:
-                return SyncResult(success=False, error="No tracks found")
-
-            # Build album_info for frontend
-            album_info = album_info_from_yubal(
-                playlist_info, tracks, url, self._audio_format
+            # Create playlist download service
+            config = PlaylistDownloadConfig(
+                download=DownloadConfig(
+                    base_path=self._base_path,
+                    codec=self._codec,
+                    quiet=True,
+                ),
+                generate_m3u=True,
+                save_cover=True,
             )
-            emit(
-                ProgressStep.FETCHING_INFO,
-                f"Found {len(tracks)} tracks: {album_info.title}",
-                10.0,
-                {"album_info": album_info.model_dump()},
+            service = create_playlist_downloader(
+                config, cookies_path=self._cookies_path
             )
 
-            if cancel_token.is_cancelled():
-                return SyncResult(
-                    success=False, album_info=album_info, error="Cancelled"
-                )
+            emit(ProgressStep.FETCHING_INFO, "Starting...", 0.0)
 
-            # Phase 2: Download tracks (10% -> 90%)
-            emit(ProgressStep.DOWNLOADING, "Starting download...", 10.0)
+            # Iterate through all phases
+            for progress in service.download_playlist(url, cancel_token):
+                step = _map_phase(progress.phase)
 
-            config = DownloadConfig(
-                base_path=self._base_path,
-                codec=self._codec,
-                quiet=True,
-            )
-            downloader = create_downloader(config)
+                if progress.phase == "extracting":
+                    # Collect tracks for album_info building
+                    if progress.extract_progress:
+                        tracks.append(progress.extract_progress.track)
+                        playlist_info = progress.extract_progress.playlist_info
 
-            downloaded: list[DownloadResult] = []
-            failed_count = 0
-
-            for progress in downloader.download_tracks(tracks):
-                if cancel_token.is_cancelled():
-                    return SyncResult(
-                        success=False, album_info=album_info, error="Cancelled"
+                    # Scale to 0-10%
+                    pct = (
+                        (progress.current / progress.total) * 10.0
+                        if progress.total
+                        else 0.0
                     )
+                    msg = self._format_extract_message(progress)
+                    emit(step, msg, pct)
 
-                result = progress.result
-                if result.status == DownloadStatus.SUCCESS and result.output_path:
-                    downloaded.append(result)
-                elif result.status == DownloadStatus.SKIPPED and result.output_path:
-                    downloaded.append(result)
-                else:
-                    failed_count += 1
+                    # Build album_info when extraction completes
+                    if progress.current == progress.total and playlist_info and tracks:
+                        album_info = album_info_from_yubal(
+                            playlist_info, tracks, url, self._audio_format
+                        )
+                        emit(
+                            step,
+                            f"Found {len(tracks)} tracks: {album_info.title}",
+                            10.0,
+                            {"album_info": album_info.model_dump()},
+                        )
 
-                # Scale to 10-90%
-                pct = 10.0 + (progress.current / progress.total) * 80.0
-                status_msg = (
-                    "downloaded"
-                    if result.status == DownloadStatus.SUCCESS
-                    else result.status.value
-                )
-                cur, tot = progress.current, progress.total
-                msg = f"[{cur}/{tot}] {result.track.title}: {status_msg}"
-                emit(ProgressStep.DOWNLOADING, msg, pct)
+                elif progress.phase == "downloading":
+                    # Scale to 10-90%
+                    pct = (
+                        10.0 + (progress.current / progress.total) * 80.0
+                        if progress.total
+                        else 10.0
+                    )
+                    msg = self._format_download_message(progress)
+                    emit(step, msg, pct)
 
-            if not downloaded:
+                    # Update bitrate from first successful download
+                    if (
+                        progress.download_progress
+                        and album_info
+                        and not album_info.audio_bitrate
+                    ):
+                        result = progress.download_progress.result
+                        if result.status == DownloadStatus.SUCCESS and result.bitrate:
+                            album_info.audio_bitrate = result.bitrate
+
+                elif progress.phase == "composing":
+                    # Scale to 90-100%
+                    pct = (
+                        90.0 + (progress.current / progress.total) * 10.0
+                        if progress.total
+                        else 90.0
+                    )
+                    msg = progress.message or "Generating playlist files..."
+                    emit(step, msg, pct)
+
+            # Get final result
+            result = service.get_result()
+            if not result:
                 return SyncResult(
-                    success=False,
-                    album_info=album_info,
-                    error="All downloads failed",
+                    success=False, album_info=album_info, error="No tracks found"
                 )
 
-            # Update bitrate from first downloaded file
-            bitrate = downloaded[0].bitrate
-            if bitrate:
-                album_info.audio_bitrate = bitrate
+            # Determine destination from results
+            destination: str | None = None
+            for dl_result in result.download_results:
+                if dl_result.output_path:
+                    destination = str(dl_result.output_path.parent)
+                    break
 
-            # Phase 3: Finalization (90% -> 100%)
-            emit(ProgressStep.IMPORTING, "Finalizing...", 90.0)
-
-            # Determine destination from first downloaded file
-            destination = str(downloaded[0].output_path.parent)
-
-            # Generate M3U for playlists (not albums)
-            if playlist_info.title and not is_album_playlist(playlist_info.playlist_id):
-                emit(ProgressStep.IMPORTING, "Generating playlist file...", 95.0)
-                tracks_for_m3u = [
-                    (r.track, r.output_path) for r in downloaded if r.output_path
-                ]
-                m3u_path = write_m3u(
-                    self._base_path, playlist_info.title, tracks_for_m3u
-                )
-                destination = str(m3u_path.parent)
+            # Use M3U path's parent if we generated a playlist
+            if result.m3u_path:
+                destination = str(result.m3u_path.parent)
 
             emit(ProgressStep.COMPLETED, f"Sync complete: {destination}", 100.0)
 
@@ -241,6 +244,12 @@ class SyncService:
                 destination=destination,
             )
 
+        except CancellationError:
+            return SyncResult(
+                success=False,
+                album_info=album_info,
+                error="Cancelled",
+            )
         except Exception as e:
             emit(ProgressStep.FAILED, str(e))
             return SyncResult(
@@ -248,3 +257,23 @@ class SyncService:
                 album_info=album_info,
                 error=str(e),
             )
+
+    def _format_extract_message(self, progress: PlaylistProgress) -> str:
+        """Format progress message for extraction phase."""
+        if progress.extract_progress:
+            ep = progress.extract_progress
+            return f"Extracted {ep.current}/{ep.total}: {ep.track.title}"
+        return f"Extracting {progress.current}/{progress.total}..."
+
+    def _format_download_message(self, progress: PlaylistProgress) -> str:
+        """Format progress message for download phase."""
+        if progress.download_progress:
+            dp = progress.download_progress
+            result = dp.result
+            status_msg = (
+                "downloaded"
+                if result.status == DownloadStatus.SUCCESS
+                else result.status.value
+            )
+            return f"[{dp.current}/{dp.total}] {result.track.title}: {status_msg}"
+        return f"Downloading {progress.current}/{progress.total}..."

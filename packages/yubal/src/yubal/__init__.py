@@ -28,13 +28,14 @@ from yubal.config import APIConfig, AudioCodec, DownloadConfig, PlaylistDownload
 from yubal.exceptions import (
     APIError,
     AuthenticationRequiredError,
+    CancellationError,
     DownloadError,
     PlaylistNotFoundError,
     PlaylistParseError,
     UnsupportedPlaylistError,
     YTMetaError,
 )
-from yubal.models.domain import ExtractProgress, TrackMetadata, VideoType
+from yubal.models.domain import CancelToken, ExtractProgress, TrackMetadata, VideoType
 from yubal.services import (
     DownloaderProtocol,
     DownloadProgress,
@@ -144,7 +145,7 @@ def create_playlist_downloader(
         >>> print(f"M3U: {result.m3u_path}")
 
         # With authentication for private playlists
-        >>> service = create_playlist_downloader(config, cookies_path=Path("cookies.txt"))
+        >>> service = create_playlist_downloader(config, cookies_path=cookies)
     """
     return PlaylistDownloadService(config, cookies_path=cookies_path)
 
@@ -154,6 +155,8 @@ __all__ = [
     "APIError",
     "AudioCodec",
     "AuthenticationRequiredError",
+    "CancelToken",
+    "CancellationError",
     "DownloadConfig",
     "DownloadError",
     "DownloadProgress",

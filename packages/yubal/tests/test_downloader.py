@@ -202,22 +202,6 @@ class TestDownloadService:
         )
         assert len(mock_downloader.downloads) == 2
 
-    def test_download_tracks_all_convenience_method(
-        self,
-        sample_track: TrackMetadata,
-        sample_track_no_atv: TrackMetadata,
-        download_config: DownloadConfig,
-    ) -> None:
-        """Should download all tracks using convenience method."""
-        mock_downloader = MockDownloader()
-        service = DownloadService(download_config, mock_downloader)
-
-        results = service.download_tracks_all([sample_track, sample_track_no_atv])
-
-        assert len(results) == 2
-        assert all(r.status == DownloadStatus.SUCCESS for r in results)
-        assert len(mock_downloader.downloads) == 2
-
     def test_download_tracks_yields_progress(
         self,
         sample_track: TrackMetadata,

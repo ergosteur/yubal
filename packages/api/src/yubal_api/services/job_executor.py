@@ -66,7 +66,7 @@ class JobExecutor:
 
         try:
             # Check cancellation before starting (CancelToken is single source of truth)
-            if cancel_token.is_cancelled():
+            if cancel_token.is_cancelled:
                 return
 
             self._job_store.transition_job(
@@ -85,7 +85,7 @@ class JobExecutor:
                 progress: float | None,
                 details: dict[str, Any] | None,
             ) -> None:
-                if cancel_token.is_cancelled():
+                if cancel_token.is_cancelled:
                     return
 
                 status = self._step_to_status(step)
@@ -116,7 +116,7 @@ class JobExecutor:
             )
 
             # Handle result
-            if cancel_token.is_cancelled():
+            if cancel_token.is_cancelled:
                 self._job_store.transition_job(
                     job_id, JobStatus.CANCELLED, "Job cancelled by user"
                 )
