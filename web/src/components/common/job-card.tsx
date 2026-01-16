@@ -1,4 +1,4 @@
-import { Button, Chip, Progress } from "@heroui/react";
+import { Button, Chip, Image, Progress } from "@heroui/react";
 import { CheckCircle, Clock, Loader2, Trash2, X, XCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useState } from "react";
@@ -69,13 +69,18 @@ function MetadataChip({
 function Thumbnail({ url, status }: { url: string | null; status: JobStatus }) {
   if (url) {
     return (
-      <div className="relative shrink-0">
-        <img
+      <div className="relative h-16 w-16 shrink-0">
+        <Image
           src={url}
           alt=""
-          className="rounded-small h-16 w-16 object-cover"
+          radius="sm"
+          isBlurred
+          classNames={{
+            wrapper: "object-cover",
+            blurredImg: "opacity-20",
+          }}
         />
-        <div className="bg-content2/80 absolute right-0.5 bottom-0.5 rounded-full p-0.5">
+        <div className="bg-content2/80 absolute right-0.5 bottom-0.5 z-10 rounded-full p-0.5">
           <StatusIcon status={status} />
         </div>
       </div>
