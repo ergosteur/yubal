@@ -3,7 +3,7 @@
 >
 > Using Deezer and MusicBrainz as metadata sources instead.
 >
-> **Existing users:** Update to [v0.1.2](https://github.com/guillevc/yubal/releases/tag/v0.1.2) — your config will be replaced automatically (backup saved as `config_legacy.yaml`).
+> **Existing users:** Update to [v0.1.2+](https://github.com/guillevc/yubal/releases) — your config will be replaced automatically (backup saved as `config_legacy.yaml`).
 >
 > More info: [beetbox/beets#6270](https://github.com/beetbox/beets/issues/6270)
 <div align="center">

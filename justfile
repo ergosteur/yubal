@@ -16,21 +16,53 @@ alias c := check
 alias p := prod
 alias b := build
 
-# Install
+# Install (frozen lockfiles for CI)
 [group('setup')]
-[doc("Install all dependencies")]
+[doc("Install all dependencies (frozen)")]
 install: install-py install-web
 
 [group('setup')]
 [private]
 install-py:
-    uv sync --all-packages
+    uv sync --frozen --all-packages
 
 [group('setup')]
 [private]
 [working-directory('web')]
 install-web:
+    bun install --frozen-lockfile
+
+# Sync (for development)
+[group('setup')]
+[doc("Sync dependencies (updates lockfile)")]
+sync: sync-py sync-web
+
+[group('setup')]
+[private]
+sync-py:
+    uv sync --all-packages
+
+[group('setup')]
+[private]
+[working-directory('web')]
+sync-web:
     bun install
+
+# Upgrade
+[group('setup')]
+[doc("Upgrade all dependencies")]
+upgrade: upgrade-py upgrade-web
+
+[group('setup')]
+[private]
+upgrade-py:
+    uv lock --upgrade && uv sync --all-packages
+
+[group('setup')]
+[private]
+[working-directory('web')]
+upgrade-web:
+    bun update
 
 # Dev
 [group('dev')]
@@ -184,6 +216,28 @@ test-cov-web:
     bun test --coverage --coverage-reporter=lcov
 
 # Utils
+[group('utils')]
+[doc("Bump version across all packages")]
+[confirm("Bump to version {{VERSION}}?")]
+[script('bash')]
+version VERSION:
+    set -euo pipefail
+
+    # Update Python packages
+    find . -name "pyproject.toml" -not -path "./.*" \
+        -exec sed -i '' 's/^version = ".*"/version = "{{VERSION}}"/' {} \;
+
+    # Update web package
+    cd web && npm pkg set version={{VERSION}}
+
+    # Sync lockfiles
+    just sync
+
+    # Commit and tag
+    git add pyproject.toml packages/*/pyproject.toml uv.lock web/package.json web/bun.lock
+    git commit -m "chore: bump version to {{VERSION}}"
+    git tag v{{VERSION}}
+
 [group('utils')]
 [doc("Generate OpenAPI schema and TypeScript types")]
 gen-api:
