@@ -1,7 +1,6 @@
 """Global log buffer for capturing and streaming structured JSON logs."""
 
 import asyncio
-import html
 import logging
 import sys
 import threading
@@ -104,8 +103,6 @@ class BufferHandler(logging.Handler):
 
     The frontend is responsible for styling based on the structured data.
     This keeps the backend presentation-agnostic while ensuring type safety.
-
-    Security: Messages are HTML-escaped to prevent XSS attacks.
     """
 
     EXTRA_FIELDS: ClassVar[list[str]] = [
@@ -135,7 +132,7 @@ class BufferHandler(logging.Handler):
                     "%H:%M:%S"
                 ),
                 "level": record.levelname,
-                "message": html.escape(record.getMessage()),  # XSS prevention
+                "message": record.getMessage(),
             }
 
             # Add structured extras
