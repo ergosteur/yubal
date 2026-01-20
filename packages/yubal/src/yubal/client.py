@@ -114,7 +114,7 @@ class YTMusicClient:
             data = self._ytm.get_playlist(playlist_id, limit=None)
         except Exception as e:
             error_msg = str(e)
-            logger.error("Failed to fetch playlist %s: %s", playlist_id, e)
+            logger.exception("Failed to fetch playlist %s: %s", playlist_id, e)
 
             # Parse error to provide better error messages
             specific_error = self._parse_playlist_error(error_msg, playlist_id)
@@ -163,7 +163,7 @@ class YTMusicClient:
         try:
             data = self._ytm.get_album(album_id)
         except Exception as e:
-            logger.error("Failed to fetch album %s: %s", album_id, e)
+            logger.exception("Failed to fetch album %s: %s", album_id, e)
             raise APIError(f"Failed to fetch album: {e}") from e
 
         album = Album.model_validate(data)
@@ -191,7 +191,7 @@ class YTMusicClient:
                 ignore_spelling=self._config.ignore_spelling,
             )
         except Exception as e:
-            logger.error("Search failed for '%s': %s", query, e)
+            logger.exception("Search failed for '%s': %s", query, e)
             raise APIError(f"Search failed: {e}") from e
 
         return [SearchResult.model_validate(r) for r in data]

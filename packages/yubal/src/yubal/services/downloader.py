@@ -159,7 +159,7 @@ class YTDLPDownloader:
                     f"Authentication required for {video_id}. "
                     "Try providing a cookies.txt file."
                 ) from e
-            logger.error("Failed to download %s: %s", video_id, e)
+            logger.exception("Failed to download %s: %s", video_id, e)
             raise DownloadError(f"Failed to download {video_id}: {e}") from e
 
         # Return actual path captured by hook, or fallback to expected path
@@ -320,6 +320,7 @@ class DownloadService:
         try:
             video_id = self._select_video_id_for_download(track)
         except DownloadError as e:
+            logger.error("Track '%s' failed: %s", track.title, e)
             return DownloadResult(
                 track=track,
                 status=DownloadStatus.FAILED,
@@ -356,6 +357,7 @@ class DownloadService:
                 video_id_used=video_id,
             )
         except DownloadError as e:
+            logger.error("Track '%s' failed: %s", track.title, e)
             return DownloadResult(
                 track=track,
                 status=DownloadStatus.FAILED,
@@ -449,4 +451,4 @@ class DownloadService:
             cover = fetch_cover(track.cover_url)
             tag_track(path, track, cover)
         except Exception as e:
-            logger.warning("Failed to tag %s: %s", path, e)
+            logger.exception("Failed to tag %s: %s", path, e)

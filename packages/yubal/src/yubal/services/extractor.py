@@ -135,7 +135,7 @@ class MetadataExtractorService:
             try:
                 metadata = self._extract_single_track(track)
             except Exception as e:
-                logger.warning(
+                logger.exception(
                     "Failed to extract track '%s': %s",
                     track.title,
                     e,

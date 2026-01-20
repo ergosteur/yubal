@@ -280,6 +280,7 @@ class SyncService:
                 error="Cancelled",
             )
         except Exception as e:
+            logger.exception("Sync failed: %s", e)
             emit(ProgressStep.FAILED, str(e))
             return SyncResult(
                 success=False,

@@ -166,6 +166,8 @@ class JobExecutor:
                     album_info=result.album_info,
                 )
             else:
+                error_msg = result.error or "Unknown error"
+                logger.error("Job %s failed: %s", job_id[:8], error_msg)
                 self._job_store.transition_job(job_id, JobStatus.FAILED)
 
         except Exception as e:
