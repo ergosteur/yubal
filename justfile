@@ -155,8 +155,8 @@ lint-fix-web:
 
 # Format
 [group('format')]
-[doc("Format Python + Web")]
-format: format-py format-web
+[doc("Format Python + Web + Root files")]
+format: format-py format-web format-root
 
 [group('format')]
 [private]
@@ -169,10 +169,15 @@ format-py:
 format-web:
     bun run format
 
+[group('format')]
+[private]
+format-root:
+    bunx prettier --write "*.md" "*.yaml" --ignore-unknown
+
 # Format check
 [group('format')]
-[doc("Check formatting Python + Web")]
-format-check: format-check-py format-check-web
+[doc("Check formatting Python + Web + Root files")]
+format-check: format-check-py format-check-web format-check-root
 
 [group('format')]
 [private]
@@ -184,6 +189,11 @@ format-check-py:
 [working-directory('web')]
 format-check-web:
     bun run format:check
+
+[group('format')]
+[private]
+format-check-root:
+    bunx prettier --check "*.md" "*.yaml" --ignore-unknown
 
 # Typecheck
 [group('typecheck')]

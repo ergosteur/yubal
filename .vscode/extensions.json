@@ -2,7 +2,7 @@
   "recommendations": [
     "astral-sh.ty",
     "dbaeumer.vscode-eslint",
-    "prettier.prettier-vscode",
+    "esbenp.prettier-vscode",
     "charliermarsh.ruff",
     "bradlc.vscode-tailwindcss",
     "EditorConfig.EditorConfig",

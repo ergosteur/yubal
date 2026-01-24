@@ -5,6 +5,7 @@ services:
     build: .
     image: yubal:latest
     container_name: yubal
+    user: 1000:1000 # run as UID:GID (run `id` to check yours)
     environment:
       YUBAL_PORT: 8000
       YUBAL_TZ: Europe/Madrid

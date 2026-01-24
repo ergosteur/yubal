@@ -72,6 +72,8 @@ Albums are organized by artist and year. When downloading a playlist, each track
 services:
   yubal:
     image: ghcr.io/guillevc/yubal:latest
+    container_name: yubal
+    user: 1000:1000 # run as UID:GID (run `id` to check yours)
     ports:
       - 8000:8000
     environment:

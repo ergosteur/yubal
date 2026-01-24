@@ -4,6 +4,7 @@ services:
   yubal:
     image: ghcr.io/guillevc/yubal:master
     container_name: yubal
+    user: 1000:1000 # run as UID:GID (run `id` to check yours)
     ports:
       - 8000:${YUBAL_PORT}
     environment:
