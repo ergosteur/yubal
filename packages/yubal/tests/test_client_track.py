@@ -92,8 +92,10 @@ class TestGetTrack:
             client.get_track("invalid123")
 
     def test_raises_api_error_on_exception(self) -> None:
+        from ytmusicapi.exceptions import YTMusicServerError
+
         mock_ytm = MagicMock()
-        mock_ytm.get_watch_playlist.side_effect = Exception("API failure")
+        mock_ytm.get_watch_playlist.side_effect = YTMusicServerError("API failure")
         client = YTMusicClient(ytmusic=mock_ytm)
         with pytest.raises(APIError, match="Failed to fetch track"):
             client.get_track("abc123")

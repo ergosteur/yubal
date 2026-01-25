@@ -10,7 +10,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CancelToken:
@@ -203,6 +203,24 @@ class TrackMetadata(BaseModel):
     year: str | None = None
     cover_url: str | None = None
     video_type: VideoType | None = None
+
+    @field_validator("title", "album")
+    @classmethod
+    def non_empty_string(cls, v: str) -> str:
+        """Validate that title and album are non-empty strings."""
+        if not v or not v.strip():
+            raise ValueError("must not be empty")
+        return v
+
+    @field_validator("artists", "album_artists")
+    @classmethod
+    def non_empty_list(cls, v: list[str]) -> list[str]:
+        """Validate that artists lists have at least one non-empty entry."""
+        if not v:
+            raise ValueError("must have at least one entry")
+        if not any(a.strip() for a in v):
+            raise ValueError("must have at least one non-empty entry")
+        return v
 
     @property
     def artist(self) -> str:

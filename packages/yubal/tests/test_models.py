@@ -102,17 +102,20 @@ class TestTrackMetadata:
         assert data["artists"] == ["Artist"]
         assert data["album_artists"] == ["Artist"]
 
-    def test_primary_album_artist_empty_list(self) -> None:
-        """Should return 'Unknown Artist' when album_artists is empty."""
-        track = TrackMetadata(
-            omv_video_id="abc123",
-            title="Test",
-            artists=["Artist"],
-            album="Album",
-            album_artists=[],
-            video_type=VideoType.ATV,
-        )
-        assert track.primary_album_artist == "Unknown Artist"
+    def test_rejects_empty_album_artists(self) -> None:
+        """Should reject empty album_artists list."""
+        import pytest
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="must have at least one entry"):
+            TrackMetadata(
+                omv_video_id="abc123",
+                title="Test",
+                artists=["Artist"],
+                album="Album",
+                album_artists=[],
+                video_type=VideoType.ATV,
+            )
 
 
 class TestYTMusicModels:

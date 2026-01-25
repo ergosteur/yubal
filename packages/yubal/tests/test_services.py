@@ -170,7 +170,7 @@ class TestMetadataExtractorService:
 
         assert len(tracks) == 1
         assert tracks[0].title == "Unknown Song"
-        assert tracks[0].album == ""  # No album found
+        assert tracks[0].album == "Unknown Album"  # Fallback when no album found
         assert tracks[0].track_number is None
 
     def test_extract_continues_on_track_error(
@@ -1103,7 +1103,7 @@ class TestMetadataExtractorService:
         # Should have returned fallback metadata
         assert len(tracks) == 1
         assert tracks[0].title == "Test Song"
-        assert tracks[0].album == ""  # No album found
+        assert tracks[0].album == "Unknown Album"  # Fallback when no album found
 
     def test_extract_matches_track_by_video_id(
         self,

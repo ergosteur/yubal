@@ -5,7 +5,7 @@ supported by most media players.
 """
 
 import logging
-import os
+from os.path import relpath
 from pathlib import Path
 
 from yubal.models.domain import TrackMetadata
@@ -51,10 +51,13 @@ def generate_m3u(tracks: list[tuple[TrackMetadata, Path]], m3u_path: Path) -> st
         lines.append(f"#EXTINF:{duration},{display_title}")
 
         # Relative path from M3U file location to track file
+        # Note: pathlib.Path.relative_to() doesn't support going up with '..'
+        # so we use os.path.relpath which handles this correctly
         try:
-            relative_path = os.path.relpath(file_path, m3u_path.parent)
+            relative_path = relpath(file_path, m3u_path.parent)
         except ValueError:
-            relative_path = str(file_path)  # Fall back to absolute
+            # Fall back to absolute if on different drives (Windows)
+            relative_path = str(file_path)
         lines.append(relative_path)
 
     # Ensure trailing newline

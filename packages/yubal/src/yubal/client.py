@@ -1,10 +1,12 @@
 """YouTube Music API client wrapper."""
 
 import logging
+from collections import OrderedDict
 from pathlib import Path
 from typing import Protocol
 
 from ytmusicapi import YTMusic
+from ytmusicapi.exceptions import YTMusicError, YTMusicServerError, YTMusicUserError
 
 from yubal.config import APIConfig
 from yubal.exceptions import (
@@ -20,6 +22,9 @@ from yubal.models.ytmusic import Album, Playlist, PlaylistTrack, SearchResult
 from yubal.utils.cookies import cookies_to_ytmusic_auth
 
 logger = logging.getLogger(__name__)
+
+# Maximum number of albums to cache per client instance
+_ALBUM_CACHE_SIZE = 128
 
 
 class YTMusicProtocol(Protocol):
@@ -72,7 +77,8 @@ class YTMusicClient:
         else:
             self._ytm = self._create_ytmusic(cookies_path)
         self._config = config or APIConfig()
-        self._album_cache: dict[str, Album] = {}
+        # LRU cache for albums with size limit
+        self._album_cache: OrderedDict[str, Album] = OrderedDict()
 
     def _create_ytmusic(self, cookies_path: Path | None) -> YTMusic:
         """Create YTMusic instance with optional authentication.
@@ -118,9 +124,9 @@ class YTMusicClient:
         logger.debug("Fetching playlist: %s", playlist_id)
         try:
             data = self._ytm.get_playlist(playlist_id, limit=None)
-        except Exception as e:
+        except (YTMusicServerError, YTMusicUserError) as e:
             error_msg = str(e)
-            logger.exception("Failed to fetch playlist %s: %s", playlist_id, e)
+            logger.warning("YTMusic API error for playlist %s: %s", playlist_id, e)
 
             # Parse error to provide better error messages
             specific_error = self._parse_playlist_error(error_msg, playlist_id)
@@ -128,6 +134,12 @@ class YTMusicClient:
                 raise specific_error from e
 
             raise APIError(f"Failed to fetch playlist: {e}") from e
+        except YTMusicError as e:
+            logger.warning("YTMusic error for playlist %s: %s", playlist_id, e)
+            raise APIError(f"Failed to fetch playlist: {e}") from e
+        except KeyError as e:
+            logger.warning("Missing data in playlist response %s: %s", playlist_id, e)
+            raise PlaylistNotFoundError(f"Playlist not found or malformed: {playlist_id}") from e
 
         if not data:
             raise PlaylistNotFoundError(f"Playlist not found: {playlist_id}")
@@ -188,7 +200,7 @@ class YTMusicClient:
     def get_album(self, album_id: str) -> Album:
         """Fetch an album by ID.
 
-        Results are cached for the lifetime of the client instance.
+        Results are cached with LRU eviction (max 128 albums).
 
         Args:
             album_id: YouTube Music album ID.
@@ -201,17 +213,28 @@ class YTMusicClient:
         """
         if album_id in self._album_cache:
             logger.debug("Album cache hit: %s", album_id)
+            # Move to end (most recently used)
+            self._album_cache.move_to_end(album_id)
             return self._album_cache[album_id]
 
         logger.debug("Fetching album: %s", album_id)
         try:
             data = self._ytm.get_album(album_id)
-        except Exception as e:
-            logger.exception("Failed to fetch album %s: %s", album_id, e)
+        except (YTMusicServerError, YTMusicUserError) as e:
+            logger.warning("YTMusic API error for album %s: %s", album_id, e)
+            raise APIError(f"Failed to fetch album: {e}") from e
+        except YTMusicError as e:
+            logger.warning("YTMusic error for album %s: %s", album_id, e)
             raise APIError(f"Failed to fetch album: {e}") from e
 
         album = Album.model_validate(data)
+
+        # Add to cache with LRU eviction
         self._album_cache[album_id] = album
+        if len(self._album_cache) > _ALBUM_CACHE_SIZE:
+            # Remove oldest (first) item
+            self._album_cache.popitem(last=False)
+
         return album
 
     def search_songs(self, query: str) -> list[SearchResult]:
@@ -234,8 +257,11 @@ class YTMusicClient:
                 limit=self._config.search_limit,
                 ignore_spelling=self._config.ignore_spelling,
             )
-        except Exception as e:
-            logger.exception("Search failed for '%s': %s", query, e)
+        except (YTMusicServerError, YTMusicUserError) as e:
+            logger.warning("YTMusic API error for search '%s': %s", query, e)
+            raise APIError(f"Search failed: {e}") from e
+        except YTMusicError as e:
+            logger.warning("YTMusic error for search '%s': %s", query, e)
             raise APIError(f"Search failed: {e}") from e
 
         return [SearchResult.model_validate(r) for r in data]
@@ -260,8 +286,11 @@ class YTMusicClient:
         logger.debug("Fetching track: %s", video_id)
         try:
             data = self._ytm.get_watch_playlist(video_id)
-        except Exception as e:
-            logger.exception("Failed to fetch track %s: %s", video_id, e)
+        except (YTMusicServerError, YTMusicUserError) as e:
+            logger.warning("YTMusic API error for track %s: %s", video_id, e)
+            raise APIError(f"Failed to fetch track: {e}") from e
+        except YTMusicError as e:
+            logger.warning("YTMusic error for track %s: %s", video_id, e)
             raise APIError(f"Failed to fetch track: {e}") from e
 
         tracks = data.get("tracks") or []

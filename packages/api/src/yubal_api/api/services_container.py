@@ -1,11 +1,14 @@
 """Services container for dependency injection.
 
-This module is separate from app.py to avoid circular imports.
+This module provides the Services container and dependency injection
+utilities for accessing services from FastAPI routes via app.state.
 """
 
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +22,7 @@ class Services:
     """Container for application services with proper lifecycle management.
 
     All services are created at startup and cleaned up at shutdown.
+    Stored in FastAPI's app.state for proper request scoping.
     """
 
     job_store: "JobStore"
@@ -29,27 +33,19 @@ class Services:
         logger.info("Services cleaned up")
 
 
-# Module-level services container, set by lifespan
-_services: Services | None = None
+def get_services(request: Request) -> Services:
+    """Get services from request's app state (dependency injection).
 
+    Args:
+        request: FastAPI request object.
 
-def get_services() -> Services:
-    """Get the services container.
+    Returns:
+        Services container.
 
-    Raises RuntimeError if called before lifespan initialization.
+    Raises:
+        RuntimeError: If services not initialized (app not running).
     """
-    if _services is None:
+    services = getattr(request.app.state, "services", None)
+    if services is None:
         raise RuntimeError("Services not initialized. Is the app running?")
-    return _services
-
-
-def set_services(services: Services) -> None:
-    """Set the services container. Called during app startup."""
-    global _services
-    _services = services
-
-
-def clear_services() -> None:
-    """Clear the services container. Called during app shutdown."""
-    global _services
-    _services = None
+    return services

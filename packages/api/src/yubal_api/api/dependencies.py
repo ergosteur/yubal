@@ -14,23 +14,27 @@ Usage in routes:
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from yubal import AudioCodec
 
-from yubal_api.api.services_container import get_services
+from yubal_api.api.services_container import Services, get_services
 from yubal_api.services.job_executor import JobExecutor
 from yubal_api.services.job_store import JobStore
 from yubal_api.settings import get_settings
 
-# -- Service dependencies --
+# -- Service dependencies (request-scoped via app.state) --
+
+ServicesDep = Annotated[Services, Depends(get_services)]
 
 
-def _get_job_store() -> JobStore:
-    return get_services().job_store
+def _get_job_store(services: ServicesDep) -> JobStore:
+    """Get job store from services container."""
+    return services.job_store
 
 
-def _get_job_executor() -> JobExecutor:
-    return get_services().job_executor
+def _get_job_executor(services: ServicesDep) -> JobExecutor:
+    """Get job executor from services container."""
+    return services.job_executor
 
 
 JobStoreDep = Annotated[JobStore, Depends(_get_job_store)]

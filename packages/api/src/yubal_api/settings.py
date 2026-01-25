@@ -2,7 +2,7 @@
 
 import tempfile
 from datetime import tzinfo
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -85,7 +85,7 @@ class Settings(BaseSettings):
         return self.data / "Playlists"
 
 
-@lru_cache
+@cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()  # type: ignore[call-arg]

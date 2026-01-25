@@ -17,7 +17,7 @@ from rich.logging import RichHandler
 
 from yubal_api.api.exceptions import register_exception_handlers
 from yubal_api.api.routes import cookies, health, jobs, logs
-from yubal_api.api.services_container import Services, clear_services, set_services
+from yubal_api.api.services_container import Services
 from yubal_api.services.job_executor import JobExecutor
 from yubal_api.services.job_store import JobStore
 from yubal_api.services.log_buffer import (
@@ -87,8 +87,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup: initialize services
     logger.info("Starting application...")
     services = create_services()
-    set_services(services)
-    app.state.services = services  # Also store in app.state for direct access
+    app.state.services = services
     logger.info("Services initialized")
 
     yield
@@ -96,7 +95,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Shutdown: cleanup
     logger.info("Shutting down...")
     services.close()
-    clear_services()
     clear_log_buffer()
 
     temp = get_settings().temp
