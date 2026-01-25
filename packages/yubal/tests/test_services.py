@@ -1379,3 +1379,57 @@ class TestNormalizeTitleForMatching:
         from yubal.services.extractor import _normalize_title_for_matching
 
         assert _normalize_title_for_matching("UPPERCASE TITLE") == "uppercase title"
+
+
+class TestFuzzyArtistMatch:
+    """Tests for fuzzy artist matching in album search."""
+
+    def test_exact_match_returns_true(self) -> None:
+        """Should match when artists are identical."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        assert _fuzzy_artist_match({"artist one"}, {"artist one"}, 70) is True
+
+    def test_similar_artist_returns_true(self) -> None:
+        """Should match when artists are similar above threshold."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        # "kid cudi" vs "kid cudi " (extra space) = ~95% match
+        assert _fuzzy_artist_match({"kid cudi"}, {"kid cudi "}, 70) is True
+
+    def test_different_artist_returns_false(self) -> None:
+        """Should not match when artists are completely different."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        assert _fuzzy_artist_match({"taylor swift"}, {"kid cudi"}, 70) is False
+
+    def test_one_matching_artist_sufficient(self) -> None:
+        """Should match if any target artist matches any result artist."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        target = {"artist one", "artist two"}
+        result = {"artist two", "artist three"}
+        assert _fuzzy_artist_match(target, result, 70) is True
+
+    def test_no_matching_artists(self) -> None:
+        """Should not match when no artists are similar."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        target = {"taylor swift", "ed sheeran"}
+        result = {"kid cudi", "travis scott"}
+        assert _fuzzy_artist_match(target, result, 70) is False
+
+    def test_below_threshold_returns_false(self) -> None:
+        """Should not match when similarity is below threshold."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        # "abc" vs "xyz" = 0% match
+        assert _fuzzy_artist_match({"abc"}, {"xyz"}, 70) is False
+
+    def test_empty_sets_returns_false(self) -> None:
+        """Should not match when either set is empty."""
+        from yubal.services.extractor import _fuzzy_artist_match
+
+        assert _fuzzy_artist_match(set(), {"artist"}, 70) is False
+        assert _fuzzy_artist_match({"artist"}, set(), 70) is False
+        assert _fuzzy_artist_match(set(), set(), 70) is False

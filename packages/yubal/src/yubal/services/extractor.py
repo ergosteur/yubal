@@ -31,6 +31,7 @@ SUPPORTED_VIDEO_TYPES = frozenset({VideoType.ATV, VideoType.OMV})
 FUZZY_MATCH_HIGH_CONFIDENCE = 80  # Auto-accept threshold
 FUZZY_MATCH_LOW_CONFIDENCE = 50  # Minimum acceptable threshold
 ALBUM_SEARCH_TITLE_THRESHOLD = 70  # Minimum similarity for album search results
+ALBUM_SEARCH_ARTIST_THRESHOLD = 70  # Minimum similarity for artist matching
 
 # Common video suffixes to strip when comparing titles (case-insensitive)
 # These are added by YouTube for music videos but aren't part of the actual song title
@@ -67,6 +68,26 @@ def _normalize_title_for_matching(title: str) -> str:
             normalized = normalized[: -len(suffix)].strip()
             break  # Only strip one suffix
     return normalized
+
+
+def _fuzzy_artist_match(
+    target_artists: set[str], result_artists: set[str], threshold: int
+) -> bool:
+    """Check if any target artist fuzzy-matches any result artist.
+
+    Args:
+        target_artists: Set of target artist names (lowercase, stripped).
+        result_artists: Set of result artist names (lowercase, stripped).
+        threshold: Minimum similarity percentage (0-100) to consider a match.
+
+    Returns:
+        True if any artist pair exceeds the threshold.
+    """
+    for target in target_artists:
+        for result in result_artists:
+            if fuzz.ratio(target, result) >= threshold:
+                return True
+    return False
 
 
 class MetadataExtractorService:
@@ -637,25 +658,42 @@ class MetadataExtractorService:
             title_similarity = fuzz.ratio(target_title, result_title)
 
             if title_similarity < ALBUM_SEARCH_TITLE_THRESHOLD:
-                logger.debug(
-                    "Skipping result '%s' - low title match to '%s' (%.0f%%)",
+                logger.warning(
+                    "Skipping result '%s' - low title match to '%s' (%.0f%% < %d%%)",
                     result.title,
                     track.title,
                     title_similarity,
+                    ALBUM_SEARCH_TITLE_THRESHOLD,
                 )
                 continue
 
-            # Validate at least one artist matches
+            # Validate at least one artist fuzzy-matches
             result_artists = {a.name.lower().strip() for a in result.artists if a.name}
-            if not target_artists & result_artists:
-                logger.debug(
-                    "Skipping search result '%s' - no matching artists (%s vs %s)",
+            artist_matched = _fuzzy_artist_match(
+                target_artists, result_artists, ALBUM_SEARCH_ARTIST_THRESHOLD
+            )
+            # Compute best score for logging
+            best_artist_score = max(
+                (fuzz.ratio(t, r) for t in target_artists for r in result_artists),
+                default=0.0,
+            )
+            if not artist_matched:
+                logger.warning(
+                    "Skipping '%s' - artist match too low (%.0f%% < %d%%): %s vs %s",
                     result.title,
+                    best_artist_score,
+                    ALBUM_SEARCH_ARTIST_THRESHOLD,
                     target_artists,
                     result_artists,
                 )
                 continue
 
+            logger.warning(
+                "Album search match: '%s' (title: %.0f%%, artist: %.0f%%)",
+                result.title,
+                title_similarity,
+                best_artist_score,
+            )
             atv_id = (
                 result.video_id if result.video_type == VideoType.ATV.value else None
             )
