@@ -32,8 +32,7 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 def _get_job_or_raise(job_store: JobStore, job_id: str) -> Job:
     """Get job by ID or raise JobNotFoundError."""
-    job = job_store.get_job(job_id)
-    if not job:
+    if not (job := job_store.get(job_id)):
         raise JobNotFoundError(job_id)
     return job
 
@@ -53,7 +52,7 @@ async def create_job(
 
     Jobs are queued and executed sequentially. Returns 409 if queue is full.
     """
-    result = job_store.create_job(request.url, audio_format, request.max_items)
+    result = job_store.create(request.url, audio_format, request.max_items)
 
     if result is None:
         raise QueueFullError()
@@ -69,7 +68,7 @@ async def create_job(
 @router.get("")
 async def list_jobs(job_store: JobStoreDep) -> JobsResponse:
     """List all jobs (oldest first, FIFO order)."""
-    jobs = job_store.get_all_jobs()
+    jobs = job_store.get_all()
     return JobsResponse(jobs=jobs)
 
 
@@ -94,7 +93,7 @@ async def cancel_job(
     # Signal cancellation via cancel token if job is running
     job_executor.cancel_job(job_id)
 
-    success = job_store.cancel_job(job_id)
+    success = job_store.cancel(job_id)
     if not success:
         raise JobConflictError("Could not cancel job", job_id=job_id)
 
@@ -107,7 +106,7 @@ async def clear_jobs(job_store: JobStoreDep) -> ClearJobsResponse:
 
     Running and queued jobs are not affected.
     """
-    count = job_store.clear_completed()
+    count = job_store.clear_finished()
     return ClearJobsResponse(cleared=count)
 
 
@@ -129,4 +128,4 @@ async def delete_job(job_id: str, job_store: JobStoreDep) -> None:
     if not job.status.is_finished:
         raise JobConflictError("Cannot delete a running or queued job", job_id=job_id)
 
-    job_store.delete_job(job_id)
+    job_store.delete(job_id)

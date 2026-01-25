@@ -96,7 +96,7 @@ dev:
 [group('dev')]
 [private]
 dev-api:
-    uv run uvicorn yubal_api.api.app:app --reload
+    YUBAL_LOG_LEVEL=DEBUG uv run uvicorn yubal_api.api.app:app --reload
 
 [group('dev')]
 [private]

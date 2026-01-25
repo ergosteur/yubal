@@ -18,10 +18,11 @@ class JobExecutionStore(Protocol):
     All methods are synchronous as they only operate on in-memory data.
     """
 
-    def transition_job(
+    def transition(
         self,
         job_id: str,
         status: JobStatus,
+        *,
         progress: float | None = None,
         content_info: ContentInfo | None = None,
         download_stats: PhaseStats | None = None,
@@ -32,4 +33,12 @@ class JobExecutionStore(Protocol):
 
     def pop_next_pending(self) -> Job | None:
         """Get and activate the next pending job."""
+        ...
+
+    def release_active(self, job_id: str) -> bool:
+        """Release the active job slot after execution ends.
+
+        Returns:
+            True if released, False if job was not the active job.
+        """
         ...

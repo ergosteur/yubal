@@ -6,6 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from yubal import cleanup_part_files
+
 from yubal_api.core.enums import JobStatus, ProgressStep
 from yubal_api.core.models import ContentInfo, Job
 from yubal_api.services.protocols import JobExecutionStore
@@ -121,7 +123,7 @@ class JobExecutor:
             if cancel_token.is_cancelled:
                 return
 
-            self._job_store.transition_job(
+            self._job_store.transition(
                 job_id,
                 JobStatus.FETCHING_INFO,
                 started_at=datetime.now(UTC),
@@ -147,7 +149,7 @@ class JobExecutor:
                     return
 
                 loop.call_soon_threadsafe(
-                    self._job_store.transition_job,
+                    self._job_store.transition,
                     job_id,
                     status,
                     progress,
@@ -166,11 +168,11 @@ class JobExecutor:
                 max_items,
             )
 
-            # Handle result
+            # Handle result (cancelled status already set by cancel_job API)
             if cancel_token.is_cancelled:
-                self._job_store.transition_job(job_id, JobStatus.CANCELLED)
+                pass  # Status already set, cleanup happens in finally block
             elif result.success:
-                self._job_store.transition_job(
+                self._job_store.transition(
                     job_id,
                     JobStatus.COMPLETED,
                     progress=PROGRESS_COMPLETE,
@@ -180,14 +182,24 @@ class JobExecutor:
             else:
                 error_msg = result.error or "Unknown error"
                 logger.error("Job %s failed: %s", job_id[:8], error_msg)
-                self._job_store.transition_job(job_id, JobStatus.FAILED)
+                self._job_store.transition(job_id, JobStatus.FAILED)
 
         except Exception as e:
             logger.exception("Job %s failed with error: %s", job_id[:8], e)
-            self._job_store.transition_job(job_id, JobStatus.FAILED)
+            self._job_store.transition(job_id, JobStatus.FAILED)
 
         finally:
+            # Clean up .part files if job was cancelled
+            if cancel_token.is_cancelled:
+                cleaned = cleanup_part_files(self._base_path)
+                if cleaned:
+                    logger.info("Cleaned up %d partial download(s)", cleaned)
+
             self._cancel_tokens.pop(job_id, None)
+
+            # Release active job slot AFTER cleanup, then start next
+            # This ensures no concurrent downloads
+            self._job_store.release_active(job_id)
             self._start_next_pending()
 
     @staticmethod
