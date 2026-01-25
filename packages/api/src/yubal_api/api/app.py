@@ -89,13 +89,13 @@ def suppress_logging() -> None:
 def _handle_shutdown_signal(signum: int, frame: FrameType | None) -> None:
     """Handle SIGINT/SIGTERM for graceful shutdown.
 
-    Cancels all jobs and suppresses logging before uvicorn's handler runs.
+    Only does signal-safe operations (setting threading.Event flags).
+    Logging suppression happens in the lifespan handler.
     """
     del signum, frame  # Unused but required by signal handler signature
 
     if _shutdown_coordinator and not _shutdown_coordinator.is_shutting_down:
         _shutdown_coordinator.begin_shutdown()
-        suppress_logging()
 
     # Let uvicorn handle the actual shutdown
     raise KeyboardInterrupt
