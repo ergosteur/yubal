@@ -1329,3 +1329,53 @@ class TestMetadataExtractorService:
         assert tracks[0].video_type == VideoType.ATV
         assert tracks[1].video_type == VideoType.OMV
         assert "Unsupported video type 'UGC'" in caplog.text
+
+
+class TestNormalizeTitleForMatching:
+    """Tests for title normalization used in album search matching."""
+
+    def test_strips_official_video_suffix(self) -> None:
+        """Should strip (Official Video) suffix."""
+        from yubal.services.extractor import _normalize_title_for_matching
+
+        assert _normalize_title_for_matching("THOUSAND MILES (Official Video)") == (
+            "thousand miles"
+        )
+
+    def test_strips_official_music_video_suffix(self) -> None:
+        """Should strip (Official Music Video) suffix."""
+        from yubal.services.extractor import _normalize_title_for_matching
+
+        assert _normalize_title_for_matching("Song Title (Official Music Video)") == (
+            "song title"
+        )
+
+    def test_strips_official_audio_suffix(self) -> None:
+        """Should strip (Official Audio) suffix."""
+        from yubal.services.extractor import _normalize_title_for_matching
+
+        assert _normalize_title_for_matching("Track Name (Official Audio)") == (
+            "track name"
+        )
+
+    def test_preserves_title_without_suffix(self) -> None:
+        """Should preserve titles without video suffixes."""
+        from yubal.services.extractor import _normalize_title_for_matching
+
+        assert _normalize_title_for_matching("Regular Song Title") == (
+            "regular song title"
+        )
+
+    def test_preserves_feat_suffix(self) -> None:
+        """Should preserve (feat. Artist) which is part of the song title."""
+        from yubal.services.extractor import _normalize_title_for_matching
+
+        assert _normalize_title_for_matching("Neverender (feat. Tame Impala)") == (
+            "neverender (feat. tame impala)"
+        )
+
+    def test_case_insensitive(self) -> None:
+        """Should normalize to lowercase."""
+        from yubal.services.extractor import _normalize_title_for_matching
+
+        assert _normalize_title_for_matching("UPPERCASE TITLE") == "uppercase title"

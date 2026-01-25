@@ -32,6 +32,42 @@ FUZZY_MATCH_HIGH_CONFIDENCE = 80  # Auto-accept threshold
 FUZZY_MATCH_LOW_CONFIDENCE = 50  # Minimum acceptable threshold
 ALBUM_SEARCH_TITLE_THRESHOLD = 70  # Minimum similarity for album search results
 
+# Common video suffixes to strip when comparing titles (case-insensitive)
+# These are added by YouTube for music videos but aren't part of the actual song title
+_VIDEO_SUFFIXES = (
+    "(official video)",
+    "(official music video)",
+    "(official audio)",
+    "(official lyric video)",
+    "(official visualizer)",
+    "(music video)",
+    "(lyric video)",
+    "(lyrics)",
+    "(visualizer)",
+    "(audio)",
+    "(video)",
+)
+
+
+def _normalize_title_for_matching(title: str) -> str:
+    """Normalize a title by stripping common video suffixes.
+
+    OMV tracks often have suffixes like "(Official Video)" that don't appear
+    in the canonical track name. This function strips those for comparison.
+
+    Args:
+        title: Original track title.
+
+    Returns:
+        Normalized title with video suffixes removed.
+    """
+    normalized = title.lower().strip()
+    for suffix in _VIDEO_SUFFIXES:
+        if normalized.endswith(suffix):
+            normalized = normalized[: -len(suffix)].strip()
+            break  # Only strip one suffix
+    return normalized
+
 
 class MetadataExtractorService:
     """Service for extracting metadata from YouTube Music playlists.
@@ -584,7 +620,8 @@ class MetadataExtractorService:
         if not results:
             return None, None, False
 
-        target_title = track.title.lower().strip()
+        # Normalize titles to strip video suffixes like "(Official Video)"
+        target_title = _normalize_title_for_matching(track.title)
         target_artists = {a.name.lower().strip() for a in track.artists if a.name}
         had_results_with_album = False
 
@@ -595,7 +632,8 @@ class MetadataExtractorService:
             had_results_with_album = True
 
             # Validate title matches to avoid wrong albums
-            result_title = result.title.lower().strip()
+            # Use normalized titles to handle OMV suffixes
+            result_title = _normalize_title_for_matching(result.title)
             title_similarity = fuzz.ratio(target_title, result_title)
 
             if title_similarity < ALBUM_SEARCH_TITLE_THRESHOLD:
