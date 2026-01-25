@@ -67,3 +67,32 @@ def is_single_track_url(url: str) -> bool:
         True if the URL is a single track URL, False otherwise.
     """
     return parse_video_id(url) is not None
+
+
+def is_supported_url(url: str) -> bool:
+    """Check if URL is supported by yubal (playlist, album, or single track).
+
+    Args:
+        url: YouTube or YouTube Music URL.
+
+    Returns:
+        True if the URL can be processed by yubal, False otherwise.
+    """
+    if not url or len(url) > MAX_URL_LENGTH:
+        return False
+
+    url = url.strip()
+
+    # Playlist URL (has list= parameter)
+    if PLAYLIST_ID_PATTERN.search(url):
+        return True
+
+    # Single track URL (has v= parameter without list=)
+    if VIDEO_ID_PATTERN.search(url):
+        return True
+
+    # Browse URL (album pages on music.youtube.com)
+    if "/browse/" in url and "music.youtube.com" in url:
+        return True
+
+    return False

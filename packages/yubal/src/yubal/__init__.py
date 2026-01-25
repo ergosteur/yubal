@@ -64,6 +64,7 @@ from yubal.models.domain import (
 from yubal.services import MetadataExtractorService, PlaylistDownloadService
 from yubal.services.downloader import DownloadService as _DownloadService
 from yubal.utils import clear_cover_cache, fetch_cover
+from yubal.utils.url import is_single_track_url, is_supported_url
 
 
 def create_extractor(
@@ -212,4 +213,6 @@ __all__ = [
     "create_extractor",
     "create_playlist_downloader",
     "fetch_cover",
+    "is_single_track_url",
+    "is_supported_url",
 ]

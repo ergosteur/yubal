@@ -1,29 +1,25 @@
 """Job API schemas."""
 
-import re
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, Field
-from yubal import AudioCodec
+from yubal import AudioCodec, is_supported_url
 
 from yubal_api.core.models import Job
 
-# YouTube Music URL patterns
-_YOUTUBE_MUSIC_PATTERNS = [
-    r"^https?://music\.youtube\.com/playlist\?list=[\w-]+",
-    r"^https?://music\.youtube\.com/browse/[\w-]+",
-    r"^https?://(?:www\.)?youtube\.com/playlist\?list=[\w-]+",
-]
-_YOUTUBE_MUSIC_REGEX = re.compile("|".join(_YOUTUBE_MUSIC_PATTERNS))
-
 
 def validate_youtube_music_url(url: str) -> str:
-    """Validate that the URL is a YouTube Music or YouTube playlist URL."""
+    """Validate that the URL is supported by yubal.
+
+    Uses yubal's is_supported_url() as the source of truth to ensure
+    the API accepts exactly what yubal can process.
+    """
     url = url.strip()
-    if not _YOUTUBE_MUSIC_REGEX.match(url):
+    if not is_supported_url(url):
         raise ValueError(
-            "Invalid URL. Expected a YouTube Music playlist URL "
-            "(e.g., https://music.youtube.com/playlist?list=...)"
+            "Invalid URL. Expected a YouTube Music playlist or track URL "
+            "(e.g., https://music.youtube.com/playlist?list=... or "
+            "https://music.youtube.com/watch?v=...)"
         )
     return url
 
@@ -35,8 +31,11 @@ class CreateJobRequest(BaseModel):
     """Request to create a new sync job."""
 
     url: YouTubeMusicUrl = Field(
-        description="YouTube Music playlist or album URL",
-        examples=["https://music.youtube.com/playlist?list=OLAK5uy_..."],
+        description="YouTube Music playlist, album, or single track URL",
+        examples=[
+            "https://music.youtube.com/playlist?list=OLAK5uy_...",
+            "https://music.youtube.com/watch?v=VIDEO_ID",
+        ],
     )
     audio_format: AudioCodec | None = Field(
         default=None,
