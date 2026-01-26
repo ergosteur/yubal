@@ -18,7 +18,7 @@ export function UrlInput({ value, onChange, disabled }: UrlInputProps) {
       type="url"
       placeholder="Album or playlist URL"
       value={value}
-      onValueChange={onChange}
+      onValueChange={(v) => onChange(v.trim())}
       isDisabled={disabled}
       isInvalid={!isValid}
       radius="lg"
