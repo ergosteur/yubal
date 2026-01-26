@@ -22,7 +22,7 @@ export function UrlInput({ value, onChange, disabled }: UrlInputProps) {
       isDisabled={disabled}
       isInvalid={!isValid}
       radius="lg"
-      errorMessage={!isValid ? "Enter a valid YouTube Music URL" : undefined}
+      errorMessage={!isValid ? "Enter a valid YouTube URL" : undefined}
       startContent={<Link className="text-foreground-400 h-4 w-4" />}
     />
   );
