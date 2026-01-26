@@ -65,6 +65,7 @@ export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(
       <ScrollShadow
         ref={ref}
         className={`${height} p-3 ${className}`}
+        offset={2}
         {...props}
       >
         {children}
