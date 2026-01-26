@@ -92,11 +92,12 @@ class YTMusicClient:
         if cookies_path:
             auth = cookies_to_ytmusic_auth(cookies_path)
             if auth:
-                logger.info("Using authenticated YTMusic client")
+                logger.info("Using cookies for ytmusicapi requests")
                 return YTMusic(auth=auth)
-            logger.debug("Cookies file invalid or missing SAPISID, using anonymous")
+            logger.info("No valid cookies for ytmusicapi requests (missing SAPISID)")
+            return YTMusic()
 
-        logger.debug("Using anonymous YTMusic client")
+        logger.info("No cookies configured for ytmusicapi requests")
         return YTMusic()
 
     def get_playlist(self, playlist_id: str) -> Playlist:

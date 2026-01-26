@@ -96,7 +96,9 @@ class PlaylistDownloadService:
 
         # Create services
         self._extractor = extractor or MetadataExtractorService(client)
-        self._downloader = downloader or DownloadService(config.download)
+        self._downloader = downloader or DownloadService(
+            config.download, cookies_path=cookies_path
+        )
         self._composer = composer or PlaylistComposerService()
 
         # Store last result for retrieval after iteration

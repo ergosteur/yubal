@@ -106,13 +106,18 @@ def create_extractor(
     return MetadataExtractorService(client)
 
 
-def create_downloader(config: DownloadConfig) -> _DownloadService:
+def create_downloader(
+    config: DownloadConfig,
+    cookies_path: Path | None = None,
+) -> _DownloadService:
     """Create a configured download service.
 
     This is the recommended way to create a downloader for library usage.
 
     Args:
         config: Download configuration (base_path is required).
+        cookies_path: Optional path to cookies.txt for YouTube Music authentication.
+                     Required for age-restricted or premium content.
 
     Returns:
         A configured DownloadService instance.
@@ -130,8 +135,13 @@ def create_downloader(config: DownloadConfig) -> _DownloadService:
         config = DownloadConfig(base_path=Path("./music"), codec=AudioCodec.MP3)
         downloader = create_downloader(config)
         ```
+
+        With authentication:
+        ```python
+        downloader = create_downloader(config, cookies_path=Path("cookies.txt"))
+        ```
     """
-    return _DownloadService(config)
+    return _DownloadService(config, cookies_path=cookies_path)
 
 
 def create_playlist_downloader(

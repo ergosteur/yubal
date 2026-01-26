@@ -69,13 +69,25 @@ class YTDLPDownloader:
     MAX_RETRIES: int = 3
     RETRY_BASE_DELAY: float = 1.0  # seconds, doubles each retry (1s, 2s, 4s)
 
-    def __init__(self, config: DownloadConfig) -> None:
+    def __init__(
+        self,
+        config: DownloadConfig,
+        cookies_path: Path | None = None,
+    ) -> None:
         """Initialize the downloader.
 
         Args:
             config: Download configuration (codec, quality, output paths).
+            cookies_path: Optional path to cookies.txt for authentication.
+                         Required for age-restricted or premium content.
         """
         self._config = config
+        self._cookies_path = cookies_path
+
+        if cookies_path and cookies_path.exists():
+            logger.info("Using cookies for yt-dlp downloads")
+        else:
+            logger.info("No cookies configured for yt-dlp downloads")
 
     def _build_yt_dlp_options(self, output_path: Path) -> dict[str, Any]:
         """Build yt-dlp options for audio extraction and post-processing.
@@ -90,7 +102,7 @@ class YTDLPDownloader:
         Returns:
             Dictionary of yt-dlp options.
         """
-        return {
+        opts: dict[str, Any] = {
             "format": "bestaudio/best",
             "outtmpl": str(output_path),
             "color": "never",  # Disable ANSI codes in error messages
@@ -105,6 +117,12 @@ class YTDLPDownloader:
             "no_warnings": self._config.quiet,
             "noprogress": self._config.quiet,
         }
+
+        # Use cookies for age-restricted content, premium quality, etc.
+        if self._cookies_path and self._cookies_path.exists():
+            opts["cookiefile"] = str(self._cookies_path)
+
+        return opts
 
     def _is_retryable_error(self, error_msg: str) -> bool:
         """Check if the error is a retryable transient HTTP error."""
@@ -284,6 +302,7 @@ class DownloadService:
         self,
         config: DownloadConfig,
         downloader: DownloaderProtocol | None = None,
+        cookies_path: Path | None = None,
     ) -> None:
         """Initialize the service.
 
@@ -291,9 +310,11 @@ class DownloadService:
             config: Download configuration.
             downloader: Optional downloader implementation.
                         Uses YTDLPDownloader if not provided.
+            cookies_path: Optional path to cookies.txt for authentication.
+                         Required for age-restricted or premium content.
         """
         self._config = config
-        self._downloader = downloader or YTDLPDownloader(config)
+        self._downloader = downloader or YTDLPDownloader(config, cookies_path)
 
     # ============================================================================
     # PUBLIC API - Main entry points for downloading tracks
