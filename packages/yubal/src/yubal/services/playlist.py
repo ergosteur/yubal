@@ -15,7 +15,9 @@ from yubal.models.domain import (
     PlaylistDownloadResult,
     PlaylistInfo,
     PlaylistProgress,
+    SkipReason,
     TrackMetadata,
+    UnavailableTrack,
     aggregate_skip_reasons,
 )
 from yubal.services.composer import PlaylistComposerService
@@ -23,6 +25,27 @@ from yubal.services.downloader import DownloadService
 from yubal.services.extractor import MetadataExtractorService
 
 logger = logging.getLogger(__name__)
+
+
+def _format_skip_summary(
+    unavailable: list[UnavailableTrack],
+    skipped_by_reason: dict[SkipReason, int],
+) -> str:
+    """Format skip reasons into human-readable summary.
+
+    Args:
+        unavailable: Tracks YouTube reports as unavailable at source.
+        skipped_by_reason: Tracks skipped during extraction (e.g., unsupported type).
+
+    Returns:
+        Formatted string like "3 unavailable, 2 unsupported video type".
+    """
+    parts: list[str] = []
+    if unavailable:
+        parts.append(f"{len(unavailable)} unavailable")
+    for reason, count in skipped_by_reason.items():
+        parts.append(f"{count} {reason.label}")
+    return ", ".join(parts)
 
 
 class PlaylistDownloadService:
@@ -336,22 +359,30 @@ class PlaylistDownloadService:
 
         # Log extraction summary
         if last_progress:
+            # unavailable = tracks YouTube reports as unavailable at source
+            # extraction_skipped = tracks we skipped during extraction (e.g., UGC)
             unavailable = last_progress.playlist_info.unavailable_tracks
-            total_in_playlist = len(self._extracted_tracks) + len(unavailable)
+            extraction_skipped = last_progress.skipped_by_reason
+            total_skipped = len(unavailable) + sum(extraction_skipped.values())
+            total_in_playlist = len(self._extracted_tracks) + total_skipped
             kind = last_progress.playlist_info.kind.value.capitalize()
-            if unavailable:
+
+            if total_skipped:
+                skip_summary = _format_skip_summary(unavailable, extraction_skipped)
                 logger.info(
-                    "%s contains %d tracks (%d unavailable):",
+                    "%s contains %d tracks (%d skipped: %s)",
                     kind,
                     total_in_playlist,
-                    len(unavailable),
+                    total_skipped,
+                    skip_summary,
                 )
+                # Log unavailable track details (extraction skips logged earlier)
                 for ut in unavailable:
                     logger.info(
                         "  - %s by %s (%s)",
                         ut.title or "Unknown",
                         ut.artist_display,
-                        ut.reason.value,
+                        ut.reason.label,
                     )
             else:
                 logger.info("%s contains %d tracks", kind, total_in_playlist)

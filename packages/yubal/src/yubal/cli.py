@@ -214,7 +214,7 @@ def print_unavailable_tracks(
     for ut in unavailable_tracks:
         console.print(
             f"  [dim]- {ut.title or 'Unknown'} by {ut.artist_display} "
-            f"({ut.reason.value})[/dim]"
+            f"({ut.reason.label})[/dim]"
         )
 
 

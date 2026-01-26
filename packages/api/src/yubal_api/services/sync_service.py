@@ -214,8 +214,7 @@ def _download_status_text(status: DownloadStatus, skip_reason: Any) -> str:
     if status == DownloadStatus.SUCCESS:
         return "downloaded"
     if status == DownloadStatus.SKIPPED and skip_reason:
-        reason_display = skip_reason.value.replace("_", " ")
-        return f"skipped ({reason_display})"
+        return f"skipped ({skip_reason.label})"
     return status.value
 
 

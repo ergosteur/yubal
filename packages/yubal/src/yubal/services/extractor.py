@@ -186,7 +186,7 @@ class MetadataExtractorService:
                 logger.debug(
                     "Skipped track '%s': %s",
                     track.title,
-                    skip_reason.value,
+                    skip_reason.label,
                 )
                 continue
 
@@ -263,7 +263,7 @@ class MetadataExtractorService:
         # Return None for skipped tracks (unsupported type, no album match, etc.)
         if metadata is None:
             if skip_reason:
-                logger.info("Track skipped: %s", skip_reason.value)
+                logger.info("Track skipped: %s", skip_reason.label)
             return None
 
         # Create synthetic playlist info for single track
@@ -325,7 +325,7 @@ class MetadataExtractorService:
 
         # Yield progress with skip reason if skipped
         if metadata is None and skip_reason is not None:
-            logger.info("Track skipped: %s", skip_reason.value)
+            logger.info("Track skipped: %s", skip_reason.label)
             yield ExtractProgress(
                 current=1,
                 total=1,

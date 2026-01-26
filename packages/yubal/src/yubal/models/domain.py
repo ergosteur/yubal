@@ -85,6 +85,21 @@ class SkipReason(StrEnum):
     REGION_UNAVAILABLE = "region_unavailable"
     NO_ALBUM_MATCH = "no_album_match"
 
+    @property
+    def label(self) -> str:
+        """Human-readable label for display."""
+        match self:
+            case SkipReason.FILE_EXISTS:
+                return "file exists"
+            case SkipReason.UNSUPPORTED_VIDEO_TYPE:
+                return "unsupported video type"
+            case SkipReason.NO_VIDEO_ID:
+                return "no video ID"
+            case SkipReason.REGION_UNAVAILABLE:
+                return "region unavailable"
+            case SkipReason.NO_ALBUM_MATCH:
+                return "no album match"
+
 
 class UnavailableTrack(BaseModel):
     """Track unavailable at source with metadata for display.
